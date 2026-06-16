@@ -1,0 +1,36 @@
+[
+ {
+  "InstFile" : "C:/Users/laura/Desktop/FemtoRV_UN/lcd_test/src/top.v",
+  "InstLine" : 1,
+  "InstName" : "top",
+  "ModuleFile" : "C:/Users/laura/Desktop/FemtoRV_UN/lcd_test/src/top.v",
+  "ModuleLine" : 1,
+  "ModuleName" : "top",
+  "SubInsts" : [
+   {
+    "InstFile" : "C:/Users/laura/Desktop/FemtoRV_UN/lcd_test/src/top.v",
+    "InstLine" : 17,
+    "InstName" : "pll_40m_inst",
+    "ModuleFile" : "C:/Users/laura/Desktop/FemtoRV_UN/lcd_test/src/gowin_rpll/pll_40m.v",
+    "ModuleLine" : 9,
+    "ModuleName" : "pll_40m"
+   },
+   {
+    "InstFile" : "C:/Users/laura/Desktop/FemtoRV_UN/lcd_test/src/top.v",
+    "InstLine" : 34,
+    "InstName" : "lcd_ctrl_inst",
+    "ModuleFile" : "C:/Users/laura/Desktop/FemtoRV_UN/lcd_test/src/lcd_ctrl.v",
+    "ModuleLine" : 12,
+    "ModuleName" : "lcd_ctrl"
+   },
+   {
+    "InstFile" : "C:/Users/laura/Desktop/FemtoRV_UN/lcd_test/src/top.v",
+    "InstLine" : 47,
+    "InstName" : "lcd_data_inst",
+    "ModuleFile" : "C:/Users/laura/Desktop/FemtoRV_UN/lcd_test/src/lcd_data.v",
+    "ModuleLine" : 3,
+    "ModuleName" : "lcd_data"
+   }
+  ]
+ }
+]

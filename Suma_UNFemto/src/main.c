@@ -1,0 +1,97 @@
+// =========================================================================
+//  SUMADORA BASICA — FemtoUN RV32I
+// =========================================================================
+
+#define uart_data ((volatile int *)0x00400008)
+#define uart_ctrl ((volatile int *)0x00400010)
+
+void enviar_char(char c);
+void imprimir_str(const char *s);
+char leer_char(void);
+void imprimir_numero(int n);
+
+int main(void) {
+    for (volatile int i = 0; i < 500000; i++);
+
+    while (1) {
+        imprimir_str("\r\n=== SUMADORA BASICA ===\r\n");
+
+        int num1 = 0;
+        int num2 = 0;
+
+        imprimir_str("Numero 1 y Enter: ");
+        while (1) {
+            char t = leer_char();
+            if (t >= '0' && t <= '9') {
+                num1 = (num1 << 3) + (num1 << 1) + (t - '0');
+                enviar_char(t);
+            } else if (t == '\r' || t == '\n') {
+                break;
+            }
+        }
+
+        imprimir_str("\r\nOperador (+): ");
+        while (1) {
+            char t = leer_char();
+            if (t == '+') {
+                enviar_char(t);
+                break;
+            }
+        }
+
+        imprimir_str("\r\nNumero 2 y Enter: ");
+        while (1) {
+            char t = leer_char();
+            if (t >= '0' && t <= '9') {
+                num2 = (num2 << 3) + (num2 << 1) + (t - '0');
+                enviar_char(t);
+            } else if (t == '\r' || t == '\n') {
+                break;
+            }
+        }
+
+        int suma = num1 + num2;
+        imprimir_str("\r\nResultado: ");
+        imprimir_numero(suma);
+        imprimir_str("\r\n-----------------------\r\n");
+    }
+
+    return 0;
+}
+
+char leer_char(void) {
+    while (!(*uart_ctrl & (1 << 8)));
+    char t = (char)(*uart_data & 0xFF);
+    *uart_ctrl = 2;
+    *uart_ctrl = 0;
+    while (*uart_ctrl & (1 << 8));
+    return t;
+}
+
+void enviar_char(char c) {
+    while (*uart_ctrl & (1 << 9));
+    *uart_data = (int)c;
+    *uart_ctrl = 1;
+    *uart_ctrl = 0;
+}
+
+void imprimir_str(const char *s) {
+    while (*s) { enviar_char(*s++); }
+}
+
+void imprimir_numero(int n) {
+    if (n == 0) { enviar_char('0'); return; }
+    int d; int iniciado = 0;
+    if (n < 0) { enviar_char('-'); n = -n; }
+
+    d=0; while(n>=1000000000){n-=1000000000;d++;} if(d||iniciado){enviar_char('0'+d);iniciado=1;}
+    d=0; while(n>=100000000) {n-=100000000; d++;} if(d||iniciado){enviar_char('0'+d);iniciado=1;}
+    d=0; while(n>=10000000)  {n-=10000000;  d++;} if(d||iniciado){enviar_char('0'+d);iniciado=1;}
+    d=0; while(n>=1000000)   {n-=1000000;   d++;} if(d||iniciado){enviar_char('0'+d);iniciado=1;}
+    d=0; while(n>=100000)    {n-=100000;    d++;} if(d||iniciado){enviar_char('0'+d);iniciado=1;}
+    d=0; while(n>=10000)     {n-=10000;     d++;} if(d||iniciado){enviar_char('0'+d);iniciado=1;}
+    d=0; while(n>=1000)      {n-=1000;      d++;} if(d||iniciado){enviar_char('0'+d);iniciado=1;}
+    d=0; while(n>=100)       {n-=100;       d++;} if(d||iniciado){enviar_char('0'+d);iniciado=1;}
+    d=0; while(n>=10)        {n-=10;        d++;} if(d||iniciado){enviar_char('0'+d);iniciado=1;}
+    d=0; while(n>=1)         {n-=1;         d++;} enviar_char('0'+d);
+}

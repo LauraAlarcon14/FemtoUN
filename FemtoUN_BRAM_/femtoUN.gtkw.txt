@@ -1,0 +1,111 @@
+[*]
+[*] GTKWave Save File - FemtoUN SoC
+[*]
+
+[dumpfile] "femtoUN.vcd"
+[timestart] 37700000000
+[size] 1600 900
+[pos] -1 -1
+
+*-3.000000 37749000000 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1 -1
+
+[sst_width] 250
+[signals_width] 280
+[sst_expanded] 1
+[sst_vpaned_height] 200
+
+@28
+[color] 2
+tb_femtoUN.DUT.clk_27mhz
+@28
+[color] 1
+tb_femtoUN.DUT.rst_n
+@28
+[color] 1
+tb_femtoUN.DUT.resetn
+@28
+[color] 3
+tb_femtoUN.DUT.led
+
+@200
+-
+@200
+-CPU
+@22
+[color] 2
+tb_femtoUN.DUT.SOC.CPU.PC[23:0]
+@22
+tb_femtoUN.DUT.SOC.CPU.instr[31:2]
+@22
+tb_femtoUN.DUT.SOC.CPU.state[3:0]
+@22
+tb_femtoUN.DUT.SOC.CPU.rs1[31:0]
+@22
+tb_femtoUN.DUT.SOC.CPU.rs2[31:0]
+
+@200
+-
+@200
+-BUS de Memoria
+@22
+[color] 5
+tb_femtoUN.DUT.SOC.mem_addr[31:0]
+@22
+[color] 5
+tb_femtoUN.DUT.SOC.mem_rdata[31:0]
+@22
+[color] 5
+tb_femtoUN.DUT.SOC.mem_wdata[31:0]
+@22
+tb_femtoUN.DUT.SOC.mem_wmask[3:0]
+@28
+tb_femtoUN.DUT.SOC.rd
+@28
+tb_femtoUN.DUT.SOC.wr
+@28
+[color] 3
+tb_femtoUN.DUT.SOC.bram_cs
+@28
+[color] 1
+tb_femtoUN.DUT.SOC.uart_cs
+
+@200
+-
+@200
+-UART TX
+@28
+[color] 2
+tb_femtoUN.DUT.uart_tx
+@28
+tb_femtoUN.DUT.SOC.UART.uart0.tx_busy
+@22
+tb_femtoUN.DUT.SOC.UART.uart0.txd_reg[7:0]
+@22
+tb_femtoUN.DUT.SOC.UART.uart0.tx_bitcount[3:0]
+@28
+tb_femtoUN.DUT.SOC.UART.uart0.tx_wr
+
+@200
+-
+@200
+-UART RX
+@28
+tb_femtoUN.DUT.uart_rx
+@28
+tb_femtoUN.DUT.SOC.UART.uart0.rx_avail
+@22
+tb_femtoUN.DUT.SOC.UART.uart0.rx_data[7:0]
+
+@200
+-
+@200
+-Periferico UART
+@22
+tb_femtoUN.DUT.SOC.UART.d_in_uart[7:0]
+@22
+tb_femtoUN.DUT.SOC.UART.uart_ctrl[7:0]
+@22
+tb_femtoUN.DUT.SOC.UART.s[1:0]
+
+[pattern_trace] 1
+[pattern_trace] 0

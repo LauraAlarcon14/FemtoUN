@@ -1,0 +1,61 @@
+GowinSynthesis start
+Running parser ...
+Analyzing Verilog file 'C:\Gowin\Gowin_V1.9.12.01_x64\IDE\bin\Documents\FemtoUN_BRAM\src\SOC_bram.v'
+Analyzing Verilog file 'C:\Gowin\Gowin_V1.9.12.01_x64\IDE\bin\Documents\FemtoUN_BRAM\src\bram_hex.v'
+Analyzing Verilog file 'C:\Gowin\Gowin_V1.9.12.01_x64\IDE\bin\Documents\FemtoUN_BRAM\src\femtorv32_quark.v'
+Analyzing Verilog file 'C:\Gowin\Gowin_V1.9.12.01_x64\IDE\bin\Documents\FemtoUN_BRAM\src\perip_uart.v'
+Analyzing Verilog file 'C:\Gowin\Gowin_V1.9.12.01_x64\IDE\bin\Documents\FemtoUN_BRAM\src\top_tang_bram.v'
+Analyzing Verilog file 'C:\Gowin\Gowin_V1.9.12.01_x64\IDE\bin\Documents\FemtoUN_BRAM\src\uart.v'
+WARN  (EX3801) : Parameter 'divisor' becomes localparam in 'uart' with formal parameter declaration list("C:\Gowin\Gowin_V1.9.12.01_x64\IDE\bin\Documents\FemtoUN_BRAM\src\uart.v":24)
+Compiling module 'top_tang_bram'("C:\Gowin\Gowin_V1.9.12.01_x64\IDE\bin\Documents\FemtoUN_BRAM\src\top_tang_bram.v":1)
+WARN  (EX3791) : Expression size 21 truncated to fit in target size 20("C:\Gowin\Gowin_V1.9.12.01_x64\IDE\bin\Documents\FemtoUN_BRAM\src\top_tang_bram.v":13)
+WARN  (EX3073) : Port 'ledout' remains unconnected for this instance("C:\Gowin\Gowin_V1.9.12.01_x64\IDE\bin\Documents\FemtoUN_BRAM\src\SOC_bram.v":49)
+Compiling module 'SOC_bram'("C:\Gowin\Gowin_V1.9.12.01_x64\IDE\bin\Documents\FemtoUN_BRAM\src\SOC_bram.v":1)
+Compiling module 'bram_hex'("C:\Gowin\Gowin_V1.9.12.01_x64\IDE\bin\Documents\FemtoUN_BRAM\src\bram_hex.v":1)
+Extracting RAM for identifier 'MEM'("C:\Gowin\Gowin_V1.9.12.01_x64\IDE\bin\Documents\FemtoUN_BRAM\src\bram_hex.v":11)
+Compiling module 'peripheral_uart'("C:\Gowin\Gowin_V1.9.12.01_x64\IDE\bin\Documents\FemtoUN_BRAM\src\perip_uart.v":1)
+WARN  (EX2420) : Latch inferred for net 's[1]'; We do not recommend the use of latches in FPGA designs, as they may lead to timing problems("C:\Gowin\Gowin_V1.9.12.01_x64\IDE\bin\Documents\FemtoUN_BRAM\src\perip_uart.v":34)
+WARN  (EX2420) : Latch inferred for net 'd_out[31]'; We do not recommend the use of latches in FPGA designs, as they may lead to timing problems("C:\Gowin\Gowin_V1.9.12.01_x64\IDE\bin\Documents\FemtoUN_BRAM\src\perip_uart.v":55)
+Compiling module 'uart'("C:\Gowin\Gowin_V1.9.12.01_x64\IDE\bin\Documents\FemtoUN_BRAM\src\uart.v":5)
+WARN  (EX3791) : Expression size 32 truncated to fit in target size 16("C:\Gowin\Gowin_V1.9.12.01_x64\IDE\bin\Documents\FemtoUN_BRAM\src\uart.v":39)
+WARN  (EX3791) : Expression size 5 truncated to fit in target size 4("C:\Gowin\Gowin_V1.9.12.01_x64\IDE\bin\Documents\FemtoUN_BRAM\src\uart.v":88)
+WARN  (EX3791) : Expression size 5 truncated to fit in target size 4("C:\Gowin\Gowin_V1.9.12.01_x64\IDE\bin\Documents\FemtoUN_BRAM\src\uart.v":91)
+WARN  (EX3791) : Expression size 5 truncated to fit in target size 4("C:\Gowin\Gowin_V1.9.12.01_x64\IDE\bin\Documents\FemtoUN_BRAM\src\uart.v":137)
+WARN  (EX3791) : Expression size 5 truncated to fit in target size 4("C:\Gowin\Gowin_V1.9.12.01_x64\IDE\bin\Documents\FemtoUN_BRAM\src\uart.v":140)
+Compiling module 'FemtoRV32'("C:\Gowin\Gowin_V1.9.12.01_x64\IDE\bin\Documents\FemtoUN_BRAM\src\femtorv32_quark.v":37)
+Extracting RAM for identifier 'registerFile'("C:\Gowin\Gowin_V1.9.12.01_x64\IDE\bin\Documents\FemtoUN_BRAM\src\femtorv32_quark.v":100)
+WARN  (EX3791) : Expression size 32 truncated to fit in target size 5("C:\Gowin\Gowin_V1.9.12.01_x64\IDE\bin\Documents\FemtoUN_BRAM\src\femtorv32_quark.v":174)
+WARN  (EX3791) : Expression size 25 truncated to fit in target size 24("C:\Gowin\Gowin_V1.9.12.01_x64\IDE\bin\Documents\FemtoUN_BRAM\src\femtorv32_quark.v":200)
+WARN  (EX3826) : Synthesis - simulation differences may occur when using parallel_case directive("C:\Gowin\Gowin_V1.9.12.01_x64\IDE\bin\Documents\FemtoUN_BRAM\src\femtorv32_quark.v":342)
+NOTE  (EX0101) : Current top module is "top_tang_bram"
+[5%] Running netlist conversion ...
+Running device independent optimization ...
+[10%] Optimizing Phase 0 completed
+[15%] Optimizing Phase 1 completed
+[25%] Optimizing Phase 2 completed
+Running inference ...
+[30%] Inferring Phase 0 completed
+[40%] Inferring Phase 1 completed
+[50%] Inferring Phase 2 completed
+[55%] Inferring Phase 3 completed
+Running technical mapping ...
+[60%] Tech-Mapping Phase 0 completed
+[65%] Tech-Mapping Phase 1 completed
+WARN  (DI0003) : Latch inferred for net 's[0]';We do not recommend the use of latches in FPGA designs, as they may lead to timing problems("C:\Gowin\Gowin_V1.9.12.01_x64\IDE\bin\Documents\FemtoUN_BRAM\src\perip_uart.v":34)
+WARN  (DI0003) : Latch inferred for net 'd_out[9]';We do not recommend the use of latches in FPGA designs, as they may lead to timing problems("C:\Gowin\Gowin_V1.9.12.01_x64\IDE\bin\Documents\FemtoUN_BRAM\src\perip_uart.v":55)
+WARN  (DI0003) : Latch inferred for net 'd_out[8]';We do not recommend the use of latches in FPGA designs, as they may lead to timing problems("C:\Gowin\Gowin_V1.9.12.01_x64\IDE\bin\Documents\FemtoUN_BRAM\src\perip_uart.v":55)
+WARN  (DI0003) : Latch inferred for net 'd_out[7]';We do not recommend the use of latches in FPGA designs, as they may lead to timing problems("C:\Gowin\Gowin_V1.9.12.01_x64\IDE\bin\Documents\FemtoUN_BRAM\src\perip_uart.v":55)
+WARN  (DI0003) : Latch inferred for net 'd_out[6]';We do not recommend the use of latches in FPGA designs, as they may lead to timing problems("C:\Gowin\Gowin_V1.9.12.01_x64\IDE\bin\Documents\FemtoUN_BRAM\src\perip_uart.v":55)
+WARN  (DI0003) : Latch inferred for net 'd_out[5]';We do not recommend the use of latches in FPGA designs, as they may lead to timing problems("C:\Gowin\Gowin_V1.9.12.01_x64\IDE\bin\Documents\FemtoUN_BRAM\src\perip_uart.v":55)
+WARN  (DI0003) : Latch inferred for net 'd_out[4]';We do not recommend the use of latches in FPGA designs, as they may lead to timing problems("C:\Gowin\Gowin_V1.9.12.01_x64\IDE\bin\Documents\FemtoUN_BRAM\src\perip_uart.v":55)
+WARN  (DI0003) : Latch inferred for net 'd_out[3]';We do not recommend the use of latches in FPGA designs, as they may lead to timing problems("C:\Gowin\Gowin_V1.9.12.01_x64\IDE\bin\Documents\FemtoUN_BRAM\src\perip_uart.v":55)
+WARN  (DI0003) : Latch inferred for net 'd_out[2]';We do not recommend the use of latches in FPGA designs, as they may lead to timing problems("C:\Gowin\Gowin_V1.9.12.01_x64\IDE\bin\Documents\FemtoUN_BRAM\src\perip_uart.v":55)
+WARN  (DI0003) : Latch inferred for net 'd_out[1]';We do not recommend the use of latches in FPGA designs, as they may lead to timing problems("C:\Gowin\Gowin_V1.9.12.01_x64\IDE\bin\Documents\FemtoUN_BRAM\src\perip_uart.v":55)
+WARN  (DI0003) : Latch inferred for net 'd_out[0]';We do not recommend the use of latches in FPGA designs, as they may lead to timing problems("C:\Gowin\Gowin_V1.9.12.01_x64\IDE\bin\Documents\FemtoUN_BRAM\src\perip_uart.v":55)
+WARN  (DI0003) : Latch inferred for net 's[1]';We do not recommend the use of latches in FPGA designs, as they may lead to timing problems("C:\Gowin\Gowin_V1.9.12.01_x64\IDE\bin\Documents\FemtoUN_BRAM\src\perip_uart.v":34)
+[75%] Tech-Mapping Phase 2 completed
+[80%] Tech-Mapping Phase 3 completed
+[90%] Tech-Mapping Phase 4 completed
+[95%] Generate netlist file "C:\Gowin\Gowin_V1.9.12.01_x64\IDE\bin\Documents\FemtoUN_BRAM\impl\gwsynthesis\FemtoUN_BRAM.vg" completed
+[100%] Generate report file "C:\Gowin\Gowin_V1.9.12.01_x64\IDE\bin\Documents\FemtoUN_BRAM\impl\gwsynthesis\FemtoUN_BRAM_syn.rpt.html" completed
+GowinSynthesis finish

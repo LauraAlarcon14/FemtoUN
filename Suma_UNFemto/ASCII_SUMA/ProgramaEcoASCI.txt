@@ -1,0 +1,59 @@
+// =========================================================================
+//  ECO ASCII — FemtoUN RV32I
+// =========================================================================
+
+#define uart_data ((volatile int *)0x00400008)
+#define uart_ctrl ((volatile int *)0x00400010)
+
+void enviar_byte(char c);
+void imprimir_str(const char *s);
+char recibir_byte(void);
+void imprimir_numero(int n);
+
+int main(void) {
+    asm volatile("li sp, 0x00002000");
+
+    imprimir_str("Sistema listo. Esperando entrada...\r\n");
+
+    while (1) {
+        char tecla = recibir_byte();
+        imprimir_str("Tecla: ");
+        enviar_byte(tecla);
+        imprimir_str(" ASCII: ");
+        imprimir_numero((int)(unsigned char)tecla);
+        imprimir_str("\r\n");
+    }
+}
+
+char recibir_byte(void) {
+    while (!(*uart_ctrl & (1 << 8)));
+    char t = (char)(*uart_data & 0xFF);
+    *uart_ctrl = 2;
+    *uart_ctrl = 0;
+    while (*uart_ctrl & (1 << 8));
+    return t;
+}
+
+void enviar_byte(char c) {
+    while (*uart_ctrl & (1 << 9));
+    *uart_data = (int)c;
+    *uart_ctrl = 1;
+    *uart_ctrl = 0;
+}
+
+void imprimir_str(const char *s) {
+    while (*s) { enviar_byte(*s++); }
+}
+
+void imprimir_numero(int n) {
+    if (n == 0) { enviar_byte('0'); return; }
+    int d; int iniciado = 0;
+    if (n < 0) { enviar_byte('-'); n = -n; }
+
+    d = 0; while (n >= 100) { n -= 100; d++; }
+    if (d || iniciado) { enviar_byte('0' + d); iniciado = 1; }
+    d = 0; while (n >= 10)  { n -= 10;  d++; }
+    if (d || iniciado) { enviar_byte('0' + d); iniciado = 1; }
+    d = 0; while (n >= 1)   { n -= 1;   d++; }
+    enviar_byte('0' + d);
+}

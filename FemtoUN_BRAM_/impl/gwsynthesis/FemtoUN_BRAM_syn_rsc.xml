@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Module name="top_tang_bram" Register="20" Alu="19" Lut="10" T_Register="231(20)" T_Alu="176(19)" T_Lut="754(10)" T_Bsram="6(0)">
+ <SubModule name="SOC" Lut="26" T_Register="211(0)" T_Alu="157(0)" T_Lut="744(26)" T_Bsram="6(0)">
+  <SubModule name="RAM" Lut="8" Bsram="4" T_Lut="8(8)" T_Bsram="4(4)"/>
+  <SubModule name="UART" Register="22" Lut="18" T_Register="85(22)" T_Alu="15(0)" T_Lut="81(18)">
+   <SubModule name="uart0" Register="63" Alu="15" Lut="63" T_Register="63(63)" T_Alu="15(15)" T_Lut="63(63)"/>
+  </SubModule>
+  <SubModule name="CPU" Register="126" Alu="142" Lut="629" Bsram="2" T_Register="126(126)" T_Alu="142(142)" T_Lut="629(629)" T_Bsram="2(2)"/>
+ </SubModule>
+</Module>

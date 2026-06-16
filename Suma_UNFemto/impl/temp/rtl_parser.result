@@ -1,0 +1,56 @@
+[
+ {
+  "InstFile" : "C:/Gowin/Gowin_V1.9.12.01_x64/IDE/bin/Documents/Suma_UNFemto/src/top_tang_bram.v",
+  "InstLine" : 1,
+  "InstName" : "top_tang_bram",
+  "ModuleFile" : "C:/Gowin/Gowin_V1.9.12.01_x64/IDE/bin/Documents/Suma_UNFemto/src/top_tang_bram.v",
+  "ModuleLine" : 1,
+  "ModuleName" : "top_tang_bram",
+  "SubInsts" : [
+   {
+    "InstFile" : "C:/Gowin/Gowin_V1.9.12.01_x64/IDE/bin/Documents/Suma_UNFemto/src/top_tang_bram.v",
+    "InstLine" : 16,
+    "InstName" : "SOC",
+    "ModuleFile" : "C:/Gowin/Gowin_V1.9.12.01_x64/IDE/bin/Documents/Suma_UNFemto/src/SOC_bram.v",
+    "ModuleLine" : 1,
+    "ModuleName" : "SOC_bram",
+    "SubInsts" : [
+     {
+      "InstFile" : "C:/Gowin/Gowin_V1.9.12.01_x64/IDE/bin/Documents/Suma_UNFemto/src/SOC_bram.v",
+      "InstLine" : 23,
+      "InstName" : "RAM",
+      "ModuleFile" : "C:/Gowin/Gowin_V1.9.12.01_x64/IDE/bin/Documents/Suma_UNFemto/src/bram_hex.v",
+      "ModuleLine" : 1,
+      "ModuleName" : "bram_hex"
+     },
+     {
+      "InstFile" : "C:/Gowin/Gowin_V1.9.12.01_x64/IDE/bin/Documents/Suma_UNFemto/src/SOC_bram.v",
+      "InstLine" : 38,
+      "InstName" : "UART",
+      "ModuleFile" : "C:/Gowin/Gowin_V1.9.12.01_x64/IDE/bin/Documents/Suma_UNFemto/src/perip_uart.v",
+      "ModuleLine" : 1,
+      "ModuleName" : "peripheral_uart",
+      "SubInsts" : [
+       {
+        "InstFile" : "C:/Gowin/Gowin_V1.9.12.01_x64/IDE/bin/Documents/Suma_UNFemto/src/perip_uart.v",
+        "InstLine" : 60,
+        "InstName" : "uart0",
+        "ModuleFile" : "C:/Gowin/Gowin_V1.9.12.01_x64/IDE/bin/Documents/Suma_UNFemto/src/uart.v",
+        "ModuleLine" : 5,
+        "ModuleName" : "uart"
+       }
+      ]
+     },
+     {
+      "InstFile" : "C:/Gowin/Gowin_V1.9.12.01_x64/IDE/bin/Documents/Suma_UNFemto/src/SOC_bram.v",
+      "InstLine" : 51,
+      "InstName" : "CPU",
+      "ModuleFile" : "C:/Gowin/Gowin_V1.9.12.01_x64/IDE/bin/Documents/Suma_UNFemto/src/femtorv32_quark.v",
+      "ModuleLine" : 37,
+      "ModuleName" : "FemtoRV32"
+     }
+    ]
+   }
+  ]
+ }
+]

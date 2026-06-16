@@ -1,0 +1,37 @@
+{
+ "Device" : "GW2A-18C",
+ "Files" : [
+  {
+   "Path" : "C:/Gowin/Gowin_V1.9.12.01_x64/IDE/bin/Documents/Suma_UNFemto/src/SOC_bram.v",
+   "Type" : "verilog"
+  },
+  {
+   "Path" : "C:/Gowin/Gowin_V1.9.12.01_x64/IDE/bin/Documents/Suma_UNFemto/src/bram_hex.v",
+   "Type" : "verilog"
+  },
+  {
+   "Path" : "C:/Gowin/Gowin_V1.9.12.01_x64/IDE/bin/Documents/Suma_UNFemto/src/femtorv32_quark.v",
+   "Type" : "verilog"
+  },
+  {
+   "Path" : "C:/Gowin/Gowin_V1.9.12.01_x64/IDE/bin/Documents/Suma_UNFemto/src/perip_uart.v",
+   "Type" : "verilog"
+  },
+  {
+   "Path" : "C:/Gowin/Gowin_V1.9.12.01_x64/IDE/bin/Documents/Suma_UNFemto/src/top_tang_bram.v",
+   "Type" : "verilog"
+  },
+  {
+   "Path" : "C:/Gowin/Gowin_V1.9.12.01_x64/IDE/bin/Documents/Suma_UNFemto/src/uart.v",
+   "Type" : "verilog"
+  }
+ ],
+ "IncludePath" : [
+
+ ],
+ "LoopLimit" : 2000,
+ "ResultFile" : "C:/Gowin/Gowin_V1.9.12.01_x64/IDE/bin/Documents/Suma_UNFemto/impl/temp/rtl_parser.result",
+ "Top" : "top_tang_bram",
+ "VerilogStd" : "verilog_2001",
+ "VhdlStd" : "vhdl_93"
+}

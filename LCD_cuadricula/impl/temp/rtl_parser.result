@@ -1,0 +1,28 @@
+[
+ {
+  "InstFile" : "C:/Users/laura/Desktop/FemtoRV_UN/LCD_cuadricula/src/top.v",
+  "InstLine" : 1,
+  "InstName" : "top",
+  "ModuleFile" : "C:/Users/laura/Desktop/FemtoRV_UN/LCD_cuadricula/src/top.v",
+  "ModuleLine" : 1,
+  "ModuleName" : "top",
+  "SubInsts" : [
+   {
+    "InstFile" : "C:/Users/laura/Desktop/FemtoRV_UN/LCD_cuadricula/src/top.v",
+    "InstLine" : 17,
+    "InstName" : "video_pll_m0",
+    "ModuleFile" : "C:/Users/laura/Desktop/FemtoRV_UN/LCD_cuadricula/src/gowin_rpll/video_pll.v",
+    "ModuleLine" : 2,
+    "ModuleName" : "video_pll"
+   },
+   {
+    "InstFile" : "C:/Users/laura/Desktop/FemtoRV_UN/LCD_cuadricula/src/top.v",
+    "InstLine" : 22,
+    "InstName" : "vga_timing_m0",
+    "ModuleFile" : "C:/Users/laura/Desktop/FemtoRV_UN/LCD_cuadricula/src/vga_timing.v",
+    "ModuleLine" : 1,
+    "ModuleName" : "vga_timing"
+   }
+  ]
+ }
+]
