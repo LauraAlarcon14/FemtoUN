@@ -1,0 +1,729 @@
+% =========================================================================
+%  SoC RISC-V en FPGA con FemtoRV32
+%  Implementación de Calculadora Básica: Sumadora sobre Canal UART
+%  Universidad Nacional de Colombia — Sede Manizales
+% =========================================================================
+
+\documentclass[12pt, a4paper]{article}
+
+% --- Paquetes ---
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[spanish, es-noquoting, es-nolists]{babel}   % <-- CORRECCIÓN
+\usepackage{geometry}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage{parskip}
+\usepackage{titlesec}
+\usepackage{fancyhdr}
+\usepackage{caption}
+\usepackage{amsmath}
+\usepackage{microtype}
+\usepackage{enumitem}
+
+\geometry{
+    top=2.5cm, bottom=2.5cm,
+    left=2.8cm, right=2.8cm
+}
+
+% --- Colores ---
+\definecolor{codegreen}{rgb}{0.13,0.55,0.13}
+\definecolor{codegray}{rgb}{0.5,0.5,0.5}
+\definecolor{codeblue}{rgb}{0.0,0.25,0.6}
+\definecolor{codebg}{rgb}{0.97,0.97,0.97}
+\definecolor{codered}{rgb}{0.7,0.0,0.0}
+
+% --- Estilo de código C ---
+\lstdefinestyle{cstyle}{
+    backgroundcolor=\color{codebg},
+    commentstyle=\color{codegreen}\itshape,
+    keywordstyle=\color{codeblue}\bfseries,
+    numberstyle=\tiny\color{codegray},
+    stringstyle=\color{codered},
+    basicstyle=\ttfamily\footnotesize,
+    breakatwhitespace=false,
+    breaklines=true,
+    captionpos=b,
+    keepspaces=true,
+    numbers=left,
+    numbersep=5pt,
+    showspaces=false,
+    showstringspaces=false,
+    showtabs=false,
+    tabsize=3,
+    frame=single,
+    rulecolor=\color{codegray},
+    language=C
+}
+
+% --- Estilo de código ensamblador / shell ---
+\lstdefinestyle{asmstyle}{
+    backgroundcolor=\color{codebg},
+    basicstyle=\ttfamily\footnotesize,
+    breaklines=true,
+    captionpos=b,
+    numbers=left,
+    numberstyle=\tiny\color{codegray},
+    numbersep=5pt,
+    frame=single,
+    rulecolor=\color{codegray},
+    keywordstyle=\color{codeblue}\bfseries,
+    commentstyle=\color{codegreen}\itshape,
+    morecomment=[l]{\#},
+    tabsize=3
+}
+
+% --- Encabezado y pie de página ---
+\pagestyle{fancy}
+\fancyhf{}
+\rhead{\footnotesize FemtoUN SoC -- Implementación de Sumadora Básica}
+\lhead{\footnotesize Arquitectura de Computadores}
+\cfoot{\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+
+% --- Formato de secciones ---
+\titleformat{\section}{\large\bfseries}{{\thesection}}{1em}{}[\titlerule]
+\titleformat{\subsection}{\normalsize\bfseries}{{\thesubsection}}{1em}{}
+
+% --- Hiperenlaces ---
+\hypersetup{
+    colorlinks=true,
+    linkcolor=codeblue,
+    urlcolor=codeblue,
+    citecolor=codeblue
+}
+
+% =========================================================================
+\begin{document}
+
+% --- Portada ---
+\begin{titlepage}
+    \centering
+    \vspace*{1.5cm}
+    {\Large \textbf{SoC RISC-V en FPGA con FemtoRV32}\\[0.4cm]
+    \large Implementación de Calculadora Básica:\\
+    Sumadora sobre Canal UART}\\[2cm]
+
+    {\normalsize
+    Universidad Nacional de Colombia\\
+    Programa: Ingeniería Electrónica\\
+    Asignatura: Arquitectura de Computadores\\[1.5cm]
+    FPGA: Tang Primer 20K --- GW2A-LV18PG256C8/I7\\
+    Procesador: FemtoRV32 Quark (RV32I)\\
+    Herramienta: Gowin EDA 1.9.12 \textbar\ Toolchain: xpack-riscv-none-elf-gcc-15.2.0\\[1.5cm]
+    Junio 2026}
+
+    \vfill
+    \begin{abstract}
+    \noindent
+    Este documento describe el diseño, implementación y proceso de depuración
+    de una calculadora básica de suma ejecutada sobre el SoC FemtoUN. El programa
+    constituye la primera etapa de lógica de aplicación construida sobre el canal
+    UART previamente validado mediante el programa de eco ASCII. Se documentan
+    cinco hallazgos identificados durante la depuración, cada uno con su síntoma
+    observable, causa raíz diagnosticada y corrección aplicada o hipótesis activa.
+    Al cierre del presente informe, la operación de suma produce resultados correctos
+    para operandos de un dígito en todos los casos probados; la suma de operandos
+    con dos o más dígitos presenta resultados incorrectos cuya causa raíz permanece
+    bajo investigación.
+
+    \medskip
+    \noindent Repositorio: \texttt{femtorv2-soc-fpga} \textbar\ Licencia MIT \textbar\ Verilog + C bare-metal
+    \end{abstract}
+\end{titlepage}
+
+\tableofcontents
+\newpage
+
+% =========================================================================
+\section{Contexto y Objetivo}
+
+\subsection{Posición en el flujo de desarrollo}
+
+El presente informe es continuación directa del trabajo documentado en
+\textit{Verificación del Canal UART mediante Programa de Eco ASCII}, que estableció
+las condiciones operativas del subsistema de comunicación serial del SoC FemtoUN.
+Una vez confirmada la integridad bidireccional del canal, el paso siguiente en el
+flujo de desarrollo consiste en construir lógica de aplicación que haga uso de dicho
+canal: la calculadora básica.
+
+La calculadora implementa una máquina de estados simple que solicita al usuario dos
+operandos numéricos y un operador aritmético a través de la terminal PuTTY, ejecuta
+la operación sobre el procesador FemtoRV32 Quark y devuelve el resultado por el
+mismo canal. El presente informe cubre únicamente la operación de suma; las
+operaciones de resta, multiplicación y división se documentarán en informes
+posteriores una vez resueltos los problemas identificados en esta etapa.
+
+\subsection{Objetivos específicos}
+
+\begin{enumerate}[leftmargin=*, label=\arabic*.]
+    \item Implementar la lectura de operandos numéricos de múltiples dígitos desde
+    la terminal UART, acumulando el valor mediante aritmética de desplazamiento de bits.
+    \item Ejecutar la operación de suma sobre el procesador RV32I y transmitir el
+    resultado formateado hacia la terminal.
+    \item Identificar y documentar los problemas encontrados durante el proceso de
+    depuración, estableciendo las condiciones necesarias para la implementación de
+    las operaciones aritméticas restantes.
+\end{enumerate}
+
+% =========================================================================
+\section{Diseño del Firmware de la Sumadora}
+
+\subsection{Principio de operación}
+
+El firmware implementa un lazo continuo con tres fases secuenciales. En la primera
+fase se captura el primer operando dígito a dígito hasta recibir el carácter de
+retorno de carro. En la segunda fase se espera el carácter operador, en este caso
+únicamente el símbolo \texttt{+}. En la tercera fase se captura el segundo operando
+con el mismo mecanismo. Una vez completadas las tres fases, se calcula la suma y
+se imprime el resultado en la terminal, tras lo cual el lazo reinicia.
+
+El acceso al periférico UART se realiza mediante macros de preprocesador, siguiendo
+el principio establecido en el programa de eco ASCII: las direcciones de hardware
+deben resolverse en tiempo de compilación, sin dependencia de ningún mecanismo de
+inicialización de sección \texttt{.data}.
+
+\begin{lstlisting}[style=cstyle, caption={Definición de acceso a registros UART mediante macros.}]
+#define uart_data ((volatile int *)0x00400008)
+#define uart_ctrl ((volatile int *)0x00400010)
+\end{lstlisting}
+
+\subsection{Acumulación de dígitos sin multiplicación nativa}
+
+El procesador FemtoRV32 Quark implementa el conjunto base RV32I, que no incluye
+la extensión de multiplicación de hardware. El uso del operador \texttt{*} en el
+código fuente genera llamadas a funciones de biblioteca en tiempo de ejecución
+(\texttt{\_\_mulsi3}) que no están disponibles en un entorno compilado con
+\texttt{-nostartfiles} sin soporte de \texttt{libgcc}.
+
+La acumulación del valor numérico a partir de dígitos ASCII se implementa mediante
+una combinación de desplazamientos de bits equivalente a la multiplicación por diez:
+
+\begin{lstlisting}[style=cstyle, caption={Acumulación de dígito sin operador de multiplicación.}]
+num1 = (num1 << 3) + (num1 << 1) + (t - '0');
+/* equivalente a: num1 = num1 * 8 + num1 * 2 + digito
+                       = num1 * 10 + digito            */
+\end{lstlisting}
+
+Esta expresión es algebraicamente correcta y genera únicamente instrucciones de
+desplazamiento y suma presentes en RV32I, sin llamadas a funciones de runtime.
+
+\subsection{Impresión del resultado sin división nativa}
+
+Por la misma razón que impide el uso del operador \texttt{*}, los operadores
+\texttt{/} y \texttt{\%} tampoco están disponibles directamente. La conversión del
+resultado entero a su representación decimal se realiza mediante restas sucesivas
+para cada potencia de diez, con un rango que cubre hasta $10^9$.
+
+\begin{lstlisting}[style=cstyle, caption={Fragmento de \texttt{imprimir\_numero} mediante restas sucesivas.}]
+void imprimir_numero(int n) {
+    if (n == 0) { enviar_char('0'); return; }
+    int d; int iniciado = 0;
+    if (n < 0) { enviar_char('-'); n = -n; }
+
+    d=0; while(n>=1000000000){n-=1000000000;d++;}
+    if(d||iniciado){enviar_char('0'+d);iniciado=1;}
+    /* ... continua para cada potencia de diez ... */
+    d=0; while(n>=1){n-=1;d++;} enviar_char('0'+d);
+}
+\end{lstlisting}
+
+\subsection{Lazo principal}
+
+\begin{lstlisting}[style=cstyle, caption={Estructura del lazo principal de la sumadora.}]
+int main(void) {
+    for (volatile int i = 0; i < 500000; i++);  /* retardo inicial */
+
+    while (1) {
+        int num1 = 0, num2 = 0;
+
+        imprimir_str("\r\n=== SUMADORA BASICA ===\r\n");
+
+        imprimir_str("Numero 1 y Enter: ");
+        while (1) {
+            char t = leer_char();
+            if (t >= '0' && t <= '9') {
+                num1 = (num1 << 3) + (num1 << 1) + (t - '0');
+                enviar_char(t);
+            } else if (t == '\r' || t == '\n') break;
+        }
+
+        imprimir_str("\r\nOperador (+): ");
+        while (1) {
+            char t = leer_char();
+            if (t == '+') { enviar_char(t); break; }
+        }
+
+        imprimir_str("\r\nNumero 2 y Enter: ");
+        while (1) {
+            char t = leer_char();
+            if (t >= '0' && t <= '9') {
+                num2 = (num2 << 3) + (num2 << 1) + (t - '0');
+                enviar_char(t);
+            } else if (t == '\r' || t == '\n') break;
+        }
+
+        imprimir_str("\r\nResultado: ");
+        imprimir_numero(num1 + num2);
+        imprimir_str("\r\n-----------------------\r\n");
+    }
+    return 0;
+}
+\end{lstlisting}
+
+% =========================================================================
+\section{Mapa de Registros del Periférico UART}
+
+Los registros del periférico UART y sus campos de bits son idénticos a los
+documentados en el informe de eco ASCII. Se reproduce aquí únicamente la tabla
+de referencia rápida para facilitar la lectura del presente documento.
+
+\begin{table}[h]
+\centering
+\caption{Registros del periférico UART accedidos por el firmware de la sumadora.}
+\begin{tabular}{llll}
+\toprule
+\textbf{Dirección} & \textbf{Nombre} & \textbf{Acceso} & \textbf{Descripción} \\
+\midrule
+\texttt{0x00400008} & \texttt{UART\_DATA} & R/W &
+    Escritura: byte a transmitir. Lectura: byte recibido. \\
+\texttt{0x00400010} & \texttt{UART\_CTRL} & R/W &
+    Ver Tabla~\ref{tab:ctrl}. \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[h]
+\centering
+\caption{Campos de bits del registro \texttt{UART\_CTRL} (0x00400010).}
+\label{tab:ctrl}
+\begin{tabular}{cll}
+\toprule
+\textbf{Bit} & \textbf{Nombre} & \textbf{Descripción} \\
+\midrule
+0 & \texttt{tx\_wr}   & Pulso activo alto: inicia transmisión. \\
+1 & \texttt{rx\_ack}  & Pulso activo alto: confirma lectura y limpia \texttt{rx\_avail}. \\
+2 & \texttt{LED}      & Control del LED de usuario. \\
+7 & \texttt{rx\_error}& Error de trama. \\
+8 & \texttt{rx\_avail}& Byte recibido disponible para lectura. \\
+9 & \texttt{tx\_busy} & Transmisor ocupado procesando un envío. \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+% =========================================================================
+\section{Parámetros del Sistema}
+
+\begin{table}[h]
+\centering
+\caption{Parámetros de hardware y software del entorno de verificación.}
+\begin{tabular}{ll}
+\toprule
+\textbf{Parámetro} & \textbf{Valor} \\
+\midrule
+FPGA              & Tang Primer 20K --- GW2A-LV18PG256C8/I7 \\
+Frecuencia de reloj & 27~MHz \\
+Baud rate UART    & 120\,000~bps \\
+Duración de trama & $\approx 83.3~\mu$s (10 bits a 120~kbps) \\
+Ciclos por trama  & $27{,}000{,}000 / 120{,}000 \times 10 = 2250$ ciclos \\
+Memoria BRAM      & 8192 palabras de 32 bits (32~KiB) \\
+Compilador        & xpack-riscv-none-elf-gcc 15.2.0 \\
+Flags             & \texttt{-march=rv32i -mabi=ilp32 -Os -nostartfiles} \\
+Terminal          & PuTTY --- COM9, 120000~baud, ISO-8859-1 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+% =========================================================================
+\section{Hallazgos Durante la Depuración}
+
+Durante el proceso de implementación de la sumadora se identificaron cinco
+problemas. Los tres primeros fueron resueltos exitosamente; los dos últimos
+corresponden a la causa raíz del comportamiento incorrecto observado con
+operandos de dos dígitos, que permanece bajo investigación al cierre de este
+informe.
+
+% -----------------------------------------------------------------
+\subsection{FIX 1 -- Retardo por software insuficiente en \texttt{leer\_char}}
+
+\textbf{Síntoma:} Al introducir un número de dos dígitos, la terminal mostraba
+el mismo dígito impreso dos veces consecutivas y el resultado de la suma era
+incorrecto. El problema no se manifestaba con operandos de un solo dígito.
+
+\textbf{Causa:} La función \texttt{leer\_char} utilizaba un retardo por software
+(\texttt{for} con 50\,000 iteraciones) para esperar que la bandera
+\texttt{rx\_avail} bajara después del pulso \texttt{rx\_ack}. Con el flag de
+optimización \texttt{-Os}, el compilador reduce significativamente el número de
+ciclos efectivos del retardo. Al escribir dígitos consecutivos con rapidez normal,
+el retardo expiraba antes de que \texttt{rx\_avail} hubiera bajado, y el firmware
+procesaba el mismo byte por segunda vez.
+
+\textbf{Corrección:} Reemplazar el retardo fijo por la espera activa sobre la
+bandera, siguiendo el protocolo documentado en el informe de eco ASCII:
+
+\begin{lstlisting}[style=cstyle, caption={Protocolo correcto de recepción con espera de \texttt{rx\_avail}.}]
+char leer_char(void) {
+    while (!(*uart_ctrl & (1 << 8)));   /* esperar rx_avail = 1 */
+    char t = (char)(*uart_data & 0xFF);
+    *uart_ctrl = 2;                     /* rx_ack = 1            */
+    *uart_ctrl = 0;                     /* rx_ack = 0            */
+    while (*uart_ctrl & (1 << 8));      /* esperar rx_avail = 0  */
+    return t;
+}
+\end{lstlisting}
+
+% -----------------------------------------------------------------
+\subsection{FIX 2 -- Verificación del comportamiento de \texttt{leer\_char}}
+
+\textbf{Síntoma:} Tras aplicar FIX~1, los resultados continuaban siendo
+incorrectos para operandos de dos dígitos. No estaba claro si el problema
+residía en la función de lectura o en la lógica de acumulación.
+
+\textbf{Método de diagnóstico:} Se implementó un programa de prueba que evaluó
+tres variantes de \texttt{leer\_char} en secuencia, imprimiendo el código ASCII
+de cada byte recibido junto con la variante que lo capturó. El usuario presionó
+una única tecla por iteración y esperó la respuesta del sistema antes de
+continuar.
+
+\begin{table}[h]
+\centering
+\caption{Resultados de la prueba de variantes de \texttt{leer\_char}.}
+\begin{tabular}{clll}
+\toprule
+\textbf{Variante} & \textbf{Mecanismo} & \textbf{Teclas presionadas} & \textbf{Resultado} \\
+\midrule
+A & \texttt{while(rx\_avail)} tras \texttt{rx\_ack} & 1, 2, 3 & Un byte por tecla \\
+B & Retardo 5\,000 iteraciones & 4, 5, 6 & Un byte por tecla \\
+C & Retardo 10\,000 + limpieza & 7, 8, 9 & Un byte por tecla \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\textbf{Conclusión:} Las tres variantes producen exactamente un byte por tecla
+presionada cuando el usuario introduce las entradas de forma controlada. El
+problema de resultados incorrectos no se origina en la función de lectura
+individual, sino en la lógica de acumulación o en el estado del stack durante
+la ejecución del lazo completo.
+
+% -----------------------------------------------------------------
+\subsection{FIX 3 -- Inicialización tardía del puntero de pila}
+
+\textbf{Síntoma:} Con operandos de un dígito la suma producía resultados correctos
+en la mayoría de los casos. Con operandos de dos dígitos los resultados eran
+sistemáticamente incorrectos, con un error que aumentaba proporcionalmente al
+número de dígitos del primer operando.
+
+\textbf{Causa:} La instrucción \texttt{asm volatile("li sp, 0x00002000")} estaba
+ubicada dentro de \texttt{main}. En un flujo compilado con \texttt{-nostartfiles},
+el código de arranque que normalmente inicializa el puntero de pila antes de la
+primera instrucción de \texttt{main} no existe. El compilador puede generar un
+prólogo de función para \texttt{main} que use el stack antes de que la instrucción
+de inicialización se ejecute, produciendo escrituras en direcciones arbitrarias.
+
+\textbf{Corrección:} Separar la inicialización del puntero de pila en un archivo
+\texttt{start.S} que se ejecuta antes de transferir el control a \texttt{main}:
+
+\begin{lstlisting}[style=asmstyle, caption={Archivo \texttt{start.S} con inicialización del puntero de pila.}]
+.section .text
+.global _inicio
+_inicio:
+    li sp, 0x00007FF0   # inicializar stack al final de la BRAM
+    j main              # saltar al programa principal
+loop:
+    j loop              # atrapar retorno inesperado de main
+\end{lstlisting}
+
+El comando de compilación se modifica para incluir el archivo de arranque y
+especificar el punto de entrada:
+
+\begin{lstlisting}[style=asmstyle, caption={Comando de compilación con \texttt{start.S}.}]
+riscv-none-elf-gcc -march=rv32i -mabi=ilp32 -Os -nostartfiles -nostdlib ^
+  -lgcc "-Wl,-Ttext=0x00000000" "-Wl,-e_inicio" ^
+  -o firmware.elf start.S main.c
+
+riscv-none-elf-objcopy -O verilog --verilog-data-width=4 ^
+  firmware.elf firmware.hex
+\end{lstlisting}
+
+% -----------------------------------------------------------------
+\subsection{Problema abierto -- Resultados incorrectos con operandos de dos dígitos}
+
+\textbf{Síntoma:} Tras aplicar los tres correctivos anteriores, la suma de operandos
+de un dígito produce resultados correctos en todos los casos probados. Sin embargo,
+en cuanto uno de los operandos tiene dos o más dígitos, el resultado es incorrecto.
+El error no es aleatorio: se observa un desplazamiento sistemático de $-7$ por cada
+dígito adicional en el primer operando.
+
+\begin{table}[h]
+\centering
+\caption{Ejemplos de resultados incorrectos observados con operandos de dos dígitos.}
+\begin{tabular}{ccccc}
+\toprule
+\textbf{Num 1} & \textbf{Num 2} & \textbf{Esperado} & \textbf{Obtenido} & \textbf{Error} \\
+\midrule
+10 & 1 & 11 & 4  & $-7$ \\
+10 & 2 & 12 & 5  & $-7$ \\
+20 & 1 & 21 & 7  & $-14$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\textbf{Hipótesis principal:} La expresión de acumulación
+\texttt{(num1 << 3) + (num1 << 1) + (t - '0')} es algebraicamente correcta, pero
+con \texttt{-nostdlib} y \texttt{-lgcc} el linker puede estar reubicando la función
+\texttt{\_inicio} fuera de la dirección \texttt{0x00000000}, de modo que el
+procesador ejecuta código incorrecto en los primeros ciclos y el stack queda en
+un estado inconsistente antes de que \texttt{\_inicio} tome el control. El comando
+de diagnóstico recomendado es:
+
+\begin{lstlisting}[style=asmstyle, caption={Verificación de la posición de \texttt{\_inicio} en el binario.}]
+riscv-none-elf-objdump -d firmware.elf | head -30
+riscv-none-elf-nm firmware.elf | sort
+\end{lstlisting}
+
+Si \texttt{\_inicio} no aparece en \texttt{0x00000000}, la solución es agregar
+un linker script explícito que fuerce la sección \texttt{.text} a comenzar con
+\texttt{\_inicio}.
+
+% =========================================================================
+\section{Resultados y Verificación Funcional}
+
+\subsection{Evidencia de operación}
+
+La figura~\ref{fig:suma} muestra la salida del programa de la sumadora en la
+terminal PuTTY durante una sesión de prueba. La captura incluye tanto operaciones
+que producen resultados correctos como casos en los que el resultado es incorrecto,
+lo que permite analizar el patrón de fallo directamente sobre la evidencia
+experimental.
+
+\begin{figure}[h]
+\centering
+\includegraphics[width=0.55\textwidth]{suma}
+\caption{Salida del programa de sumadora en PuTTY. Se observan resultados correctos
+para operandos de un dígito y resultados incorrectos cuando el primer operando
+tiene dos dígitos.}
+\label{fig:suma}
+\end{figure}
+
+\subsection{Análisis de la salida}
+
+\begin{table}[h]
+\centering
+\caption{Contraste entre resultados esperados y obtenidos en la sesión de prueba.}
+\begin{tabular}{ccccc}
+\toprule
+\textbf{Num 1} & \textbf{Num 2} & \textbf{Esperado} & \textbf{Obtenido} & \textbf{Correcto} \\
+\midrule
+2  & 2 & 4  & 4  & \checkmark \\
+9  & 1 & 10 & 10 & \checkmark \\
+4  & 6 & 10 & 10 & \checkmark \\
+10 & 1 & 11 & 4  & $\times$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+La frontera entre comportamiento correcto e incorrecto coincide exactamente con
+la cantidad de dígitos del primer operando: un dígito produce resultados válidos
+en todos los casos; dos dígitos produce un resultado desplazado hacia abajo en
+una cantidad proporcional al número de dígitos procesados.
+
+\subsection{Resumen de pruebas}
+
+\begin{table}[h]
+\centering
+\caption{Resultados de las pruebas de verificación funcional de la sumadora.}
+\begin{tabular}{lll}
+\toprule
+\textbf{Prueba} & \textbf{Estado} & \textbf{Observación} \\
+\midrule
+TX: menú y prompts en terminal        & \checkmark & Texto recibido correctamente \\
+RX: lectura de un dígito             & \checkmark & Acumulación correcta \\
+Suma de operandos de un dígito        & \checkmark & Todos los casos probados \\
+RX: lectura de dos dígitos           & $\times$   & Resultado con error sistemático \\
+Suma de operandos de dos dígitos      & $\times$   & Error proporcional a dígitos \\
+Suma de operandos de diferente largo  & $\times$   & Error en primer operando mayor \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+% =========================================================================
+\section{Conclusiones}
+
+\begin{enumerate}[leftmargin=*, label=\arabic*.]
+    \item \textbf{La lógica de transmisión y recepción byte a byte opera
+    correctamente.} Los protocolos de acceso al periférico UART establecidos
+    en el programa de eco ASCII se transfieren sin modificación al firmware de
+    la calculadora y producen el comportamiento esperado.
+
+    \item \textbf{La acumulación de dígitos mediante desplazamientos de bits es
+    algebraicamente correcta.} La expresión \texttt{(n~<<~3) + (n~<<~1)} es
+    equivalente a \texttt{n~*~10} para cualquier entero de 32 bits en el rango
+    de trabajo. El problema no reside en esta expresión.
+
+    \item \textbf{El retardo por software no es un mecanismo confiable para
+    esperar \texttt{rx\_avail}.} La optimización \texttt{-Os} reduce el número
+    de ciclos efectivos del retardo de forma impredecible. La espera activa sobre
+    la bandera es el único mecanismo que garantiza correctitud independientemente
+    del nivel de optimización del compilador.
+
+    \item \textbf{La inicialización del puntero de pila debe preceder a cualquier
+    uso de la pila.} La instrucción \texttt{li~sp} dentro de \texttt{main} es
+    insuficiente cuando el compilador genera un prólogo de función que usa el
+    stack antes de ejecutar la primera instrucción del cuerpo de \texttt{main}.
+    El uso de \texttt{start.S} resuelve este problema estructuralmente.
+
+    \item \textbf{El problema de resultados incorrectos con operandos de dos
+    dígitos permanece abierto.} La hipótesis más probable es la ubicación
+    incorrecta de \texttt{\_inicio} fuera de \texttt{0x00000000} al compilar
+    con \texttt{-nostdlib~-lgcc}. La verificación mediante \texttt{objdump} y
+    la introducción de un linker script explícito constituyen el siguiente
+    paso de depuración.
+\end{enumerate}
+
+% =========================================================================
+\appendix
+
+\section{Resumen de Correcciones Aplicadas}
+
+\begin{table}[h]
+\centering
+\caption{Resumen de los hallazgos documentados durante la implementación.}
+\begin{tabular}{p{0.5cm}p{2.2cm}p{4.5cm}p{4.5cm}}
+\toprule
+\textbf{FIX} & \textbf{Componente} & \textbf{Problema} & \textbf{Corrección} \\
+\midrule
+1 & \texttt{leer\_char} &
+    Retardo fijo insuficiente con \texttt{-Os}; doble lectura del mismo byte &
+    Espera activa \texttt{while(rx\_avail)} tras \texttt{rx\_ack} \\
+\midrule
+2 & \texttt{leer\_char} &
+    Incertidumbre sobre si el problema era de lectura o acumulación &
+    Programa de diagnóstico con tres variantes; confirmado un byte por tecla \\
+\midrule
+3 & \texttt{main.c} &
+    Inicialización de \texttt{sp} dentro de \texttt{main} llega tarde &
+    Separar en \texttt{start.S}; compilar con \texttt{-e\_inicio} \\
+\midrule
+-- & \texttt{main.c} / \texttt{start.S} &
+    Resultados incorrectos con operandos de dos dígitos (error $-7$ por dígito) &
+    Problema abierto; hipótesis: \texttt{\_inicio} fuera de \texttt{0x0} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{Comando de Compilación Utilizado}
+
+\begin{lstlisting}[style=asmstyle, caption={Comandos de compilación y generación del archivo hex (PowerShell).}]
+cd "C:\Gowin\Gowin_V1.9.12.01_x64\IDE\bin\Documents\Suma_UNFemto\src"
+
+riscv-none-elf-gcc -march=rv32i -mabi=ilp32 -Os -nostartfiles -nostdlib ^
+  -lgcc "-Wl,-Ttext=0x00000000" "-Wl,-e_inicio" ^
+  -o firmware.elf start.S main.c
+
+riscv-none-elf-objcopy -O verilog --verilog-data-width=4 ^
+  firmware.elf firmware.hex
+
+riscv-none-elf-size firmware.elf
+\end{lstlisting}
+
+\section{Código Fuente Final}
+
+\begin{lstlisting}[style=cstyle, caption={Código completo de \texttt{main.c} -- estado al cierre del informe.}]
+#define uart_data ((volatile int *)0x00400008)
+#define uart_ctrl ((volatile int *)0x00400010)
+
+void enviar_char(char c);
+void imprimir_str(const char *s);
+char leer_char(void);
+void imprimir_numero(int n);
+
+int main(void) {
+    for (volatile int i = 0; i < 500000; i++);
+
+    while (1) {
+        imprimir_str("\r\n=== SUMADORA BASICA ===\r\n");
+        int num1 = 0, num2 = 0;
+
+        imprimir_str("Numero 1 y Enter: ");
+        while (1) {
+            char t = leer_char();
+            if (t >= '0' && t <= '9') {
+                num1 = (num1 << 3) + (num1 << 1) + (t - '0');
+                enviar_char(t);
+            } else if (t == '\r' || t == '\n') break;
+        }
+
+        imprimir_str("\r\nOperador (+): ");
+        while (1) {
+            char t = leer_char();
+            if (t == '+') { enviar_char(t); break; }
+        }
+
+        imprimir_str("\r\nNumero 2 y Enter: ");
+        while (1) {
+            char t = leer_char();
+            if (t >= '0' && t <= '9') {
+                num2 = (num2 << 3) + (num2 << 1) + (t - '0');
+                enviar_char(t);
+            } else if (t == '\r' || t == '\n') break;
+        }
+
+        imprimir_str("\r\nResultado: ");
+        imprimir_numero(num1 + num2);
+        imprimir_str("\r\n-----------------------\r\n");
+    }
+    return 0;
+}
+
+char leer_char(void) {
+    while (!(*uart_ctrl & (1 << 8)));
+    char t = (char)(*uart_data & 0xFF);
+    *uart_ctrl = 2;
+    *uart_ctrl = 0;
+    while (*uart_ctrl & (1 << 8));
+    return t;
+}
+
+void enviar_char(char c) {
+    while (*uart_ctrl & (1 << 9));
+    *uart_data = (int)c;
+    *uart_ctrl = 1;
+    *uart_ctrl = 0;
+}
+
+void imprimir_str(const char *s) {
+    while (*s) { enviar_char(*s++); }
+}
+
+void imprimir_numero(int n) {
+    if (n == 0) { enviar_char('0'); return; }
+    int d; int iniciado = 0;
+    if (n < 0) { enviar_char('-'); n = -n; }
+
+    d=0;while(n>=1000000000){n-=1000000000;d++;}
+    if(d||iniciado){enviar_char('0'+d);iniciado=1;}
+    d=0;while(n>=100000000){n-=100000000;d++;}
+    if(d||iniciado){enviar_char('0'+d);iniciado=1;}
+    d=0;while(n>=10000000){n-=10000000;d++;}
+    if(d||iniciado){enviar_char('0'+d);iniciado=1;}
+    d=0;while(n>=1000000){n-=1000000;d++;}
+    if(d||iniciado){enviar_char('0'+d);iniciado=1;}
+    d=0;while(n>=100000){n-=100000;d++;}
+    if(d||iniciado){enviar_char('0'+d);iniciado=1;}
+    d=0;while(n>=10000){n-=10000;d++;}
+    if(d||iniciado){enviar_char('0'+d);iniciado=1;}
+    d=0;while(n>=1000){n-=1000;d++;}
+    if(d||iniciado){enviar_char('0'+d);iniciado=1;}
+    d=0;while(n>=100){n-=100;d++;}
+    if(d||iniciado){enviar_char('0'+d);iniciado=1;}
+    d=0;while(n>=10){n-=10;d++;}
+    if(d||iniciado){enviar_char('0'+d);iniciado=1;}
+    d=0;while(n>=1){n-=1;d++;} enviar_char('0'+d);
+}
+\end{lstlisting}
+
+\end{document}

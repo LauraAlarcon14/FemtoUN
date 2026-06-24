@@ -1,0 +1,983 @@
+\documentclass[12pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[spanish]{babel}
+\usepackage{geometry}
+\usepackage{hyperref}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{booktabs}
+\usepackage{float}
+\usepackage{fancyhdr}
+\usepackage{titlesec}
+\usepackage{parskip}
+\usepackage{mdframed}
+\usepackage{enumitem}
+\usepackage{amsmath}
+\usepackage{tcolorbox}
+\usepackage{graphicx}
+
+\geometry{margin=2.5cm}
+
+%---------------------------------------------------------------
+% Colores institucionales
+%---------------------------------------------------------------
+\definecolor{unal}{rgb}{0.0,0.35,0.62}
+\definecolor{codegreen}{rgb}{0,0.6,0}
+\definecolor{codegray}{rgb}{0.5,0.5,0.5}
+\definecolor{backcolour}{rgb}{0.97,0.97,0.97}
+\definecolor{tipgreen}{rgb}{0.0,0.6,0.3}
+
+%---------------------------------------------------------------
+% Estilos de código
+%---------------------------------------------------------------
+\lstdefinestyle{bash}{
+    backgroundcolor=\color{black!88},
+    basicstyle=\ttfamily\small\color{white},
+    breaklines=true,
+    frame=single,
+    rulecolor=\color{black},
+    numbers=left,
+    numberstyle=\tiny\color{gray}
+}
+
+\lstdefinestyle{verilog}{
+    backgroundcolor=\color{backcolour},
+    commentstyle=\color{codegreen},
+    keywordstyle=\color{unal}\bfseries,
+    numberstyle=\tiny\color{codegray},
+    basicstyle=\ttfamily\small,
+    breaklines=true,
+    numbers=left,
+    numbersep=5pt,
+    frame=single,
+    rulecolor=\color{gray!40}
+}
+
+\lstdefinestyle{cst}{
+    backgroundcolor=\color{backcolour},
+    basicstyle=\ttfamily\small,
+    breaklines=true,
+    frame=single,
+    commentstyle=\color{codegreen},
+    morecomment=[l]{//},
+    rulecolor=\color{gray!40}
+}
+
+%---------------------------------------------------------------
+% Cajas informativas
+%---------------------------------------------------------------
+\tcbuselibrary{skins}
+\newtcolorbox{nota}{
+    colback=unal!8, colframe=unal,
+    fonttitle=\bfseries, title=Nota,
+    left=5pt, right=5pt
+}
+\newtcolorbox{advertencia}{
+    colback=yellow!15, colframe=orange!80,
+    fonttitle=\bfseries, title=Advertencia,
+    left=5pt, right=5pt
+}
+\newtcolorbox{objetivo}{
+    colback=tipgreen!10, colframe=tipgreen,
+    fonttitle=\bfseries, title=Objetivo de aprendizaje,
+    left=5pt, right=5pt
+}
+
+%---------------------------------------------------------------
+% Encabezado y pie de página
+%---------------------------------------------------------------
+\pagestyle{fancy}
+\fancyhf{}
+\rhead{\textcolor{unal}{\small Guía FemtoUN -- RISC-V}}
+\lhead{\textcolor{unal}{\small UNAL -- Ingeniería Electrónica}}
+\rfoot{\thepage}
+\lfoot{\small \today}
+
+%---------------------------------------------------------------
+% Formato de secciones
+%---------------------------------------------------------------
+\titleformat{\section}{\large\bfseries\color{unal}}{{\thesection}}{1em}{}
+\titleformat{\subsection}{\normalsize\bfseries\color{unal!80}}{{\thesubsection}}{1em}{}
+\titleformat{\subsubsection}{\small\bfseries\color{unal!60}}{{\thesubsubsection}}{1em}{}
+
+%===============================================================
+\begin{document}
+%===============================================================
+
+%---------------------------------------------------------------
+% PORTADA
+%---------------------------------------------------------------
+\begin{titlepage}
+    \centering
+    \vspace*{0.5cm}
+    {\Large \textbf{Universidad Nacional de Colombia}\\}
+    \vspace{0.2cm}
+    {\large Sede Manizales\\}
+    \vspace{0.1cm}
+    {\large Departamento de Ingeniería Eléctrica, Electrónica y Computación\\}
+    \vspace{0.2cm}
+    
+    \rule{\textwidth}{2pt}\\
+    \vspace{0.5cm}
+    {\LARGE \textbf{\textcolor{unal}{
+    Manual de Usuario y Guía de Despliegue:\\[0.4cm]
+    Implementación, Simulación y Síntesis del\\[0.4cm]
+    Microcontrolador FemtoUN basado en RISC-V}}}\\
+    \vspace{0.5cm}
+    \rule{\textwidth}{2pt}\\
+    \vspace{1cm}
+
+    \begin{tcolorbox}[colback=unal!10, colframe=unal, width=0.92\textwidth]
+    \centering
+    Esta guía práctica documenta el flujo completo desde el código HDL (Verilog)
+    hasta la programación en FPGA y la validación por puerto serie UART,
+    usando herramientas de código abierto y la plataforma Tang Primer 20K.
+    \end{tcolorbox}
+
+    \vspace{1cm}
+    {\large \textbf{Autores:} Laura Alarcón, Sebastián Orozco\\}
+    \vspace{0.3cm}
+    {\large \textbf{Hardware objetivo:} Tang Primer 20K (Gowin GW2A-18)\\}
+    \vspace{0.3cm}
+
+    \vspace{0.3cm}
+    
+\end{titlepage}
+
+%---------------------------------------------------------------
+\tableofcontents
+\newpage
+
+%===============================================================
+\section{Introducción y Contexto}
+%===============================================================
+
+\begin{objetivo}
+Al finalizar esta guía, el usuario será capaz de: clonar el entorno
+del sistema, configurar las herramientas de software locales, compilar
+firmware bare-metal para RISC-V, realizar la simulación lógica RTL del
+procesador, visualizar e interpretar señales digitales en GTKWave,
+sintetizar el diseño en Gowin EDA y transferirlo a la FPGA Tang Primer 20K
+con comunicación serial UART funcional.
+\end{objetivo}
+
+\subsection{¿Qué es el FemtoUN?}
+
+El \textbf{FemtoUN} es un SoC (System-on-Chip) educativo basado en la
+arquitectura de hardware de código abierto \textbf{RISC-V (RV32I)}.
+Su núcleo lógico principal se deriva de la variante \textit{Quark} del
+diseño \textbf{FemtoRV32} de Bruno Levy, adaptado por la Universidad
+Nacional de Colombia. El proyecto fue diseñado para:
+
+\begin{itemize}
+    \item Ser fabricado en tecnología \textbf{SkyWater 130\,nm} mediante
+          la plataforma TinyTapeout.
+    \item Ejecutarse en la FPGA \textbf{Tang Primer 20K} para validación
+          previa al silicio.
+    \item Servir como plataforma educativa en diseño digital y arquitectura
+          de computadores.
+    \item Integrar un periférico UART funcional para comunicación serial
+          con el computador.
+\end{itemize}
+
+\subsection{Arquitectura del sistema}
+
+\begin{table}[H]
+\centering
+\caption{Módulos del sistema FemtoUN}
+\begin{tabular}{@{}lll@{}}
+\toprule
+\textbf{Módulo} & \textbf{Archivo} & \textbf{Función} \\
+\midrule
+Núcleo RISC-V   & \texttt{femtorv32\_quark.v} & Procesador RV32I + RDCYCLES \\
+SOC con BRAM    & \texttt{SOC\_bram.v}         & Sistema completo con memoria interna \\
+BRAM con hex    & \texttt{bram\_hex.v}         & Memoria inicializada desde archivo .hex \\
+Periférico UART & \texttt{perip\_uart.v}       & Interfaz UART mapeada en memoria \\
+UART física     & \texttt{uart.v}              & TX/RX con oversampling $\times$16 \\
+Top FPGA        & \texttt{top\_tang\_bram.v}   & Wrapper para Tang Primer 20K \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Mapa de memoria}
+
+\begin{table}[H]
+\centering
+\caption{Mapa de memoria del FemtoUN}
+\begin{tabular}{@{}lll@{}}
+\toprule
+\textbf{Dirección} & \textbf{Periférico} & \textbf{Tamaño} \\
+\midrule
+\texttt{0x00000000} & BRAM (programa + datos) & 1\,KB (256 palabras $\times$ 32 bits) \\
+\texttt{0x00400000} & UART (TX/RX/Status)     & Registros mapeados en memoria \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+%===============================================================
+\section{Instalación de Herramientas}
+%===============================================================
+
+Para completar el flujo desde el HDL hasta el silicio/FPGA programado,
+se requieren herramientas en Windows y en la terminal Linux (WSL).
+
+\subsection{Resumen de herramientas necesarias}
+
+\begin{table}[H]
+\centering
+\caption{Herramientas requeridas y sus roles}
+\begin{tabular}{@{}llll@{}}
+\toprule
+\textbf{Herramienta} & \textbf{Sistema} & \textbf{Uso} & \textbf{Fuente} \\
+\midrule
+Gowin EDA V1.9.12+          & Windows & Síntesis FPGA          & \texttt{gowinsemi.com} \\
+WSL Ubuntu 24.04            & Windows & Compilación/simulación & Microsoft Store \\
+Icarus Verilog              & WSL     & Simulación RTL         & \texttt{apt install} \\
+GTKWave                     & WSL     & Visualizar ondas VCD   & \texttt{apt install} \\
+GCC RISC-V                  & WSL     & Compilar firmware      & \texttt{apt install} \\
+PuTTY                       & Windows & Monitor serial UART    & \texttt{putty.org} \\
+Gowin USB Driver V5         & Windows & Programar FPGA         & Con Gowin EDA \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Descarga de Gowin EDA}
+
+La síntesis lógica, el mapeo tecnológico y la generación del Bitstream
+final (\texttt{.fs}) requieren el suite oficial de Gowin Semiconductor.
+
+\begin{enumerate}
+    \item Diríjase al portal de descargas:\\
+          \url{https://gowinsemi.com/en/support/download_eda/}. Debe registrarse pedir la licencia que tardará más o menos un día en llegarle al correo institucional.
+    \item Descargue la versión \textbf{Educational Edition} para Windows. 
+  \begin{figure}[H]
+    \centering
+     \includegraphics[width=0.76\linewidth]{Img_Gowin/1.png}
+  
+    \caption{Portal oficial de descarga de Gowin EDA.}
+    \label{fig:gowin_download}
+\end{figure}
+    \item Complete el instalador incluyendo el componente
+          \textbf{Gowin Programmer}.
+\end{enumerate}
+
+
+
+\subsection{Instalación del driver USB en Windows}
+
+\begin{enumerate}
+    \item Navega a:\\
+          \texttt{C:\textbackslash Gowin\textbackslash Gowin\_V1.9.12.01\_x64\textbackslash
+          Programmer\textbackslash programmer\textbackslash driver\textbackslash}
+    \item Ejecuta como administrador:\\
+          \texttt{GowinUSBCableDriverV5\_for\_win7+.exe}
+    \item Desconecta y reconecta la board.
+    \item Verifica en el Administrador de dispositivos que aparecen
+          \textbf{USB Serial Converter A} y \textbf{B}.
+\end{enumerate}
+
+\begin{advertencia}
+Si el USB Serial Converter B no aparece con COM asignado, instala el
+driver FTDI VCP desde \texttt{ftdichip.com/drivers/vcp-drivers/}
+(versión x64 para Windows 10/11). Luego en Administrador de
+dispositivos: clic derecho en USB Serial Converter B $\rightarrow$
+Properties $\rightarrow$ Advanced $\rightarrow$ marcar
+\textbf{Load VCP}.
+\end{advertencia}
+
+\subsection{Instalación de WSL Ubuntu}
+
+\begin{enumerate}
+    \item Abra PowerShell en modo \textbf{Administrador}.
+    \item Instale Ubuntu con el siguiente comando:
+\end{enumerate}
+
+\begin{lstlisting}[style=bash, caption=Instalación de WSL Ubuntu 24.04]
+wsl --install -d Ubuntu-24.04
+\end{lstlisting}
+
+\begin{enumerate}[resume]
+    \item Reinicie el equipo cuando se solicite y configure usuario
+          y contraseña para el entorno Linux.
+\end{enumerate}
+
+
+\subsection{Instalación de paquetes en WSL Ubuntu}
+
+Dentro de la terminal Ubuntu, instala todas las herramientas necesarias:
+
+\begin{lstlisting}[style=bash, caption=Instalación del toolchain open-source en WSL]
+# Actualizar repositorios
+sudo apt update && sudo apt upgrade -y
+
+# Simulador Verilog
+sudo apt install iverilog -y
+
+# Visualizador de ondas
+sudo apt install gtkwave -y
+
+# Make para automatización
+sudo apt install make -y
+
+# Compilador cruzado RISC-V
+sudo apt install gcc-riscv64-unknown-elf -y
+
+# Programador de FPGA (opcional, alternativo a Gowin Programmer)
+sudo apt install openfpgaloader -y
+
+# Verificar instalaciones
+iverilog -v
+riscv64-unknown-elf-gcc --version
+\end{lstlisting}
+
+
+
+%===============================================================
+\section{Obtención del Proyecto (Clonación)}
+%===============================================================
+
+\subsection{Clonar desde GitHub}
+
+Todo el código validado está centralizado en el repositorio personal
+del proyecto. Para clonarlo en el entorno local:
+
+\begin{lstlisting}[style=bash, caption=Clonación de los repositorios del proyecto]
+# Directorio home del usuario
+cd ~
+
+# Repositorio simplificado del proyecto Femto (UNAL)
+git clone https://github.com/LauraAlarcon14/FemtoUN.git
+cd FemtoUN
+
+# Repositorio principal (cicamargoba)
+cd ~
+git clone https://github.com/cicamargoba/VLSI
+cd VLSI/femtoRV
+
+# Repositorio de referencia (Bruno Levy, autor del FemtoRV32)
+cd ~
+git clone https://github.com/BrunoLevy/learn-fpga
+\end{lstlisting}
+
+
+
+\begin{lstlisting}[style=bash, caption=Estructura del repositorio principal]
+ls ~/VLSI/femtoRV/
+# SOC_flash.v   bench_quark_flash.v   cores/
+# SOC_bram.v    bench_bram_TB.v       firmware/
+# femto_TB.v    OpenLane/             synthesis/
+
+ls ~/VLSI/femtoRV/cores/
+# bram/  cpu/  uart/  mult/  spi_flash/  sim_spi_flash/
+\end{lstlisting}
+
+%===============================================================
+\section{Compilación de Firmware}
+%===============================================================
+
+
+
+
+\subsection{Programa: envío de mensaje por UART}
+
+\begin{lstlisting}[style=verilog, language=C,
+                   caption=hello.c -- Programa bare-metal para UART]
+/* Mapa de registros UART en 0x00400000:
+ *   0x00400008 -> TX data  (escribir byte a transmitir)
+ *   0x00400010 -> Status   (bit 9 = tx_busy)
+ */
+void main() {
+    volatile unsigned int *uart_tx   = (unsigned int*)0x00400008;
+    volatile unsigned int *uart_ctrl = (unsigned int*)0x00400010;
+
+    char *msg = "FemtoUN RISC-V corriendo!\n";
+
+    while (*msg) {
+        *uart_ctrl = 0x08;    /* tx_wr = 1 */
+        *uart_tx   = *msg++;  /* Enviar byte */
+        volatile int i;
+        for (i = 0; i < 5000; i++);  /* Espera simple */
+    }
+    while (1);  /* Loop infinito */
+}
+\end{lstlisting}
+
+\subsection{Proceso completo de compilación}
+
+\begin{lstlisting}[style=bash, caption=Compilación de firmware para RV32I]
+# 1. Compilar con GCC para RISC-V
+riscv64-unknown-elf-gcc \
+  -march=rv32i \       # Arquitectura RV32I
+  -mabi=ilp32 \        # ABI de 32 bits
+  -nostdlib \          # Sin librerias estandar
+  -nostartfiles \      # Sin startup de librerias
+  -T linker.ld \       # Linker script propio
+  -o firmware.elf \    # Salida ELF
+  start.S \            # Startup ASM
+  hello.c              # Codigo C principal
+
+# 2. Convertir ELF a binario plano
+riscv64-unknown-elf-objcopy -O binary firmware.elf firmware.bin
+
+# 3. Convertir binario a formato hex (32 bits por palabra) para $readmemh
+python3 << 'EOF'
+import struct
+with open('firmware.bin', 'rb') as f:
+    data = f.read()
+while len(data) % 4:
+    data += b'\x00'
+words = []
+for i in range(0, len(data), 4):
+    word = struct.unpack('<I', data[i:i+4])[0]
+    words.append(f'{word:08x}')
+while len(words) < 256:
+    words.append('00000013')   # NOP padding
+with open('firmware.hex', 'w') as f:
+    f.write('\n'.join(words) + '\n')
+print(f'Generadas {len(words)} palabras')
+EOF
+
+# 4. Verificar las primeras instrucciones
+head -5 firmware.hex
+# Debe mostrar:
+# 00001137  <- LUI x2   (carga SP)
+# ffe10113  <- ADDI x2,x2,-2
+# 008000ef  <- JAL      (llama main)
+# 0000006f  <- J loop
+\end{lstlisting}
+
+%===============================================================
+\section{Simulación RTL con Icarus Verilog}
+%===============================================================
+
+\subsection{¿Qué es la simulación RTL?}
+
+La simulación RTL (Register Transfer Level) permite verificar el
+comportamiento del diseño \textbf{sin necesitar hardware físico}.
+El simulador evalúa el código Verilog ciclo a ciclo de reloj y
+genera un archivo \texttt{.vcd} con las señales para análisis posterior.
+
+\subsection{Simulación con BRAM interna}
+
+El procesador ejecuta instrucciones directamente desde la memoria
+BRAM interna, inicializada con el archivo \texttt{firmware.hex}:
+
+\begin{lstlisting}[style=bash, caption=Compilar y simular con BRAM]
+cd ~/VLSI/femtoRV
+
+# Compilar el testbench
+iverilog -DBENCH -o sim_bram \
+  bench_bram_TB.v \
+  SOC_bram.v \
+  cores/cpu/femtorv32_quark.v \
+  cores/bram/bram_hex.v \
+  cores/uart/perip_uart.v \
+  cores/uart/uart.v \
+  -I cores/cpu
+
+# Ejecutar la simulacion (genera bench.vcd)
+vvp sim_bram
+# Salida esperada:
+# VCD info: dumpfile bench.vcd opened for output.
+# bench_bram_TB.v:107: $finish called at 13198260 (1s)
+\end{lstlisting}
+
+\subsection{Simulación con SPI Flash externa}
+
+\begin{lstlisting}[style=bash, caption=Compilar y simular con SPI Flash]
+cd ~/VLSI/femtoRV
+
+iverilog -DBENCH -o sim_quark \
+  bench_quark_flash.v \
+  OpenLane/src/femto.v \
+  OpenLane/src/MappedSPIRAM.v \
+  OpenLane/src/MappedSPIFlash.v \
+  cores/cpu/femtorv32_quark.v \
+  cores/bram/bram.v \
+  cores/uart/perip_uart.v \
+  cores/uart/uart.v \
+  cores/sim_spi_flash/spiflash.v \
+  cores/mult/perip_mult.v \
+  cores/mult/mult.v \
+  -I cores/cpu -I cores/bram -I cores/uart
+
+vvp sim_quark
+\end{lstlisting}
+
+
+
+%===============================================================
+\section{Visualización de Señales con GTKWave}
+%===============================================================
+
+\subsection{Abrir el archivo VCD}
+
+\begin{lstlisting}[style=bash, caption=Lanzamiento de GTKWave]
+# Desde WSL
+gtkwave bench.vcd &
+
+# O copiar a Windows y abrir desde ahi
+cp bench.vcd /mnt/c/Users/TuUsuario/Desktop/bench.vcd
+\end{lstlisting}
+
+\subsection{Agregar señales al visor}
+
+En GTKWave, en el panel izquierdo \textbf{SST}:
+\begin{enumerate}
+    \item Expande \texttt{bench} $\rightarrow$ \texttt{uut}
+          $\rightarrow$ \texttt{CPU}.
+    \item Selecciona las señales de interés.
+    \item Haz clic en \textbf{Append} para añadirlas al visor temporal.
+\end{enumerate}
+
+\subsection{Señales clave y su significado}
+
+\begin{table}[H]
+\centering
+\caption{Señales del FemtoRV32 Quark y su significado}
+\begin{tabular}{@{}lp{3.5cm}p{6cm}@{}}
+\toprule
+\textbf{Señal} & \textbf{Valor típico} & \textbf{Significado} \\
+\midrule
+\texttt{clk}          & Oscilación continua  & Reloj del sistema (27\,MHz en FPGA, 25\,MHz en sim) \\
+\texttt{resetn}       & 0$\rightarrow$1      & Reset activo bajo: 0=reset, 1=corriendo \\
+\texttt{PC[23:0]}     & Incrementa de 4 en 4 & Contador de programa, una instrucción por paso \\
+\texttt{instr[31:2]}  & Código instrucción   & Instrucción RV32I ejecutándose (30 bits) \\
+\texttt{state[3:0]}   & 1, 2, 4, 8           & FSM: FETCH(1), WAIT(2), EXECUTE(4), WAIT\_MEM(8) \\
+\texttt{mem\_addr}    & Dirección de memoria & Dirección que el CPU está accediendo \\
+\texttt{mem\_rdata}   & Dato leído           & Instrucción o dato leído desde memoria \\
+\texttt{mem\_rstrb}   & Pulso en 1           & Señal de lectura activa \\
+\texttt{mem\_wmask}   & 0000 o 1111          & Máscara de escritura en memoria \\
+\texttt{uart\_tx}     & Pulsos NRZ           & Datos saliendo por UART hacia el PC \\
+\texttt{spi\_clk}     & Pulsos               & Reloj de comunicación SPI con Flash \\
+\texttt{spi\_mosi}    & Datos serie          & Datos enviados al SPI Flash \\
+\texttt{spi\_miso}    & Datos serie          & Datos recibidos del SPI Flash \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Máquina de estados del FemtoRV32 Quark}
+
+\begin{table}[H]
+\centering
+\caption{Estados de la FSM (codificación one-hot)}
+\begin{tabular}{@{}llll@{}}
+\toprule
+\textbf{Estado}       & \textbf{Valor}  & \textbf{Acción}                & \textbf{Señales activas} \\
+\midrule
+FETCH\_INSTR          & \texttt{4'b0001} & Solicita instrucción a memoria & \texttt{mem\_rstrb=1} \\
+WAIT\_INSTR           & \texttt{4'b0010} & Espera dato de memoria         & Lee \texttt{mem\_rdata} \\
+EXECUTE               & \texttt{4'b0100} & Ejecuta la instrucción         & \texttt{writeBack, aluWr} \\
+WAIT\_ALU\_OR\_MEM    & \texttt{4'b1000} & Espera operación lenta         & Espera \texttt{!mem\_rbusy} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Decodificación de instrucciones RV32I}
+
+\begin{table}[H]
+\centering
+\caption{Ejemplos de instrucciones RV32I observadas en simulación}
+\begin{tabular}{@{}lll@{}}
+\toprule
+\textbf{Hex (32 bits)} & \textbf{Instrucción}    & \textbf{Operación} \\
+\midrule
+\texttt{00000013} & NOP (\texttt{ADDI x0,x0,0}) & No hace nada \\
+\texttt{00001137} & \texttt{LUI x2, 0x1}         & Carga inmediato alto \\
+\texttt{ffe10113} & \texttt{ADDI x2,x2,-2}       & Ajusta stack pointer \\
+\texttt{008000ef} & \texttt{JAL x1, 8}            & Salta y enlaza (llamada a función) \\
+\texttt{0000006f} & \texttt{JAL x0, 0}            & Loop infinito \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\linewidth]{Img_Gowin/bench1.png}
+    
+    \caption{Simulación RTL del FemtoRV32 Quark con BRAM interna.}
+    \label{fig:gtkwave_bram}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\linewidth]{Img_Gowin/bench.png}
+
+    \caption{Simulación RTL del FemtoRV32 Quark con SPI Flash externa.}
+    \label{fig:gtkwave_spi}
+\end{figure}
+
+%===============================================================
+\section{Síntesis en Gowin EDA}
+%===============================================================
+
+Una vez verificado el comportamiento en simulación, se procede a la
+síntesis física sobre la FPGA Tang Primer 20K.
+
+\subsection{Creación del proyecto}
+
+\begin{enumerate}
+    \item Abre Gowin EDA $\rightarrow$ \textbf{File $\rightarrow$ New Project}.
+    \item Nombre del proyecto: \texttt{FemtoUN\_BRAM}.
+    \item En la selección de dispositivo, filtra por los siguientes valores:
+\end{enumerate}
+
+\begin{table}[H]
+\centering
+\caption{Configuración del dispositivo en Gowin EDA}
+\begin{tabular}{@{}ll@{}}
+\toprule
+\textbf{Parámetro} & \textbf{Valor} \\
+\midrule
+Series      & GW2A \\
+Device      & GW2A-18 / GW2A-LV18 \\
+Package     & PBGA256 \\
+Speed Grade & C8/I7 \\
+Part Number & GW2A-LV18PG256C8/I7 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+
+\begin{figure} [H]
+    \centering
+    \includegraphics[width=0.9\linewidth]{Img_Gowin/3.png}
+    \caption{Nuevo projecto.}
+    \label{fig:placeholder}
+\end{figure}
+
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\linewidth]{Img_Gowin/4.png}
+    \caption{Seleccionamos FPGA Design Project y Ok.}
+    \label{fig:gowin_target}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\linewidth]{Img_Gowin/5.png}
+    \caption{Colocamos un nombre a nuestro proyecto y nos fijamos en la ubicación del archivo y damos click en Next.}
+    \label{fig:gowin_target}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.9\linewidth]{Img_Gowin/6.png}
+    \caption{Configuración de la arquitectura física objetivo en Gowin EDA.}
+    \label{fig:gowin_target}
+\end{figure}
+
+\begin{figure} [H]
+    \centering
+    \includegraphics[width=0.9\linewidth]{Img_Gowin/7.png}
+    \caption{Finish y está listo el entorno para programar o copiar los archivos del repositorio guia.}
+    \label{fig:gowin_target}
+\end{figure}
+
+
+
+Clic derecho en \textbf{Design} $\rightarrow$ \textbf{Add Files} y agrega:
+\begin{itemize}
+    \item \texttt{top\_tang\_bram.v} $\rightarrow$ establecer como
+          \textit{Top Level}
+    \item \texttt{SOC\_bram.v}
+    \item \texttt{bram\_hex.v}
+    \item \texttt{femtorv32\_quark.v}
+    \item \texttt{perip\_uart.v}
+    \item \texttt{uart.v}
+\end{itemize}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.4\linewidth]{Img_Gowin/8.png}
+    
+    \caption{Click derecho y Add Files.}
+    \label{fig:add_files}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\linewidth]{Img_Gowin/9.png}
+
+    \caption{Archivos de la carpeta src para importar.}
+    \label{fig:add_files}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.7\linewidth]{Img_Gowin/10.png}
+    
+    \caption{Advertencia que da el programa, dar click en Yes.}
+    \label{fig:add_files}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.4\linewidth]{Img_Gowin/11.png}
+    
+    \caption{Estructura del proyecto con los módulos lógicos importados.}
+    \label{fig:add_files}
+\end{figure}
+
+
+
+\subsection{Archivo de constraints físicos (\texttt{.cst})}
+
+Clic derecho en \textbf{Constrain} $\rightarrow$ \textbf{Add Files}
+$\rightarrow$ \textbf{Physical Constraints File}:
+
+\begin{lstlisting}[style=cst, caption=tang\_bram.cst -- Asignación de pines físicos para Tang Primer 20K]
+// Reloj principal 27 MHz
+IO_LOC "clk_27mhz" H11;
+IO_PORT "clk_27mhz" PULL_MODE=NONE IO_TYPE=LVCMOS33;
+
+// Reset (boton S1, activo bajo)
+IO_LOC "rst_n" E8;
+IO_PORT "rst_n" PULL_MODE=UP IO_TYPE=LVCMOS33;
+
+// UART TX (hacia PC)
+IO_LOC "uart_tx" H6;
+IO_PORT "uart_tx" PULL_MODE=NONE IO_TYPE=LVCMOS33;
+
+// UART RX (desde PC)
+IO_LOC "uart_rx" H5;
+IO_PORT "uart_rx" PULL_MODE=UP IO_TYPE=LVCMOS33;
+
+// LED indicador
+IO_LOC "led" L16;
+IO_PORT "led" PULL_MODE=NONE IO_TYPE=LVCMOS33;
+\end{lstlisting}
+
+\begin{advertencia}
+Los pines SPI Flash (banco 5) operan a \textbf{1.8V (LVCMOS18)} y
+están conectados internamente. No asignarlos en el \texttt{.cst} con
+\texttt{LVCMOS33}: esto genera errores de síntesis (CT1136). Para
+verificar el pinout exacto, consultar el esquemático oficial en
+\url{https://github.com/sipeed/TangPrimer-20K}.
+\end{advertencia}
+
+\subsection{Ejecución de síntesis y Place \& Route}
+
+En el panel \textbf{Process}, ejecutar en orden:
+
+\begin{enumerate}
+    \item Doble clic en \textbf{Synthesize} $\rightarrow$ esperar
+          indicador verde (\checkmark).
+    \item Doble clic en \textbf{Place \& Route} $\rightarrow$ esperar
+          indicador verde (\checkmark).
+    \item El Bitstream \texttt{.fs} se genera automáticamente en
+          \texttt{impl/pnr/}.
+\end{enumerate}
+
+\begin{nota}
+Los warnings \textit{``Latch inferred''} en \texttt{femtorv32\_quark.v}
+son esperados y no impiden la síntesis. Para eliminarlos, usa la
+versión del repositorio \texttt{cicamargoba/VLSI} que declara
+\texttt{wire writeBack} en lugar de \texttt{reg writeBack}.
+\end{nota}
+
+%===============================================================
+\section{Reporte de Recursos}
+%===============================================================
+
+\subsection{Resultados de síntesis}
+
+Tras el Place \& Route, el reporte confirma que el diseño ocupa
+una fracción pequeña de la FPGA, validando su viabilidad para
+el tile TinyTapeout (4$\times$2):
+
+\begin{table}[H]
+\centering
+\caption{Recursos del FemtoUN (Quark + BRAM + UART) en GW2A-18}
+\begin{tabular}{@{}lrrr@{}}
+\toprule
+\textbf{Recurso}  & \textbf{Usado} & \textbf{Disponible} & \textbf{Utilización} \\
+\midrule
+\textbf{Lógica total} & \textbf{1065} & 20736 & \textbf{6\%}  \\
+\quad LUT4            & 901           & 20736 & 4\%            \\
+\quad ALU             & 164           & ---   & ---            \\
+\textbf{Registros (FF)} & \textbf{314} & 15552 & \textbf{3\%} \\
+Latches               & 12            & 15552 & $<$1\%         \\
+\textbf{BSRAM}        & \textbf{6}    & 46    & \textbf{14\%} \\
+\textbf{I/O Pins}     & \textbf{5}    & 207   & \textbf{3\%}  \\
+PRIMARY Clock         & 3             & 8     & 38\%           \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Interpretación}
+
+\begin{itemize}
+    \item \textbf{901 LUTs:} El núcleo RV32I + UART ocupa menos del 5\%
+          de la FPGA; hay amplio margen para agregar periféricos.
+    \item \textbf{6 BRAMs:} La memoria de programa usa 6 de 46 bloques
+          disponibles.
+    \item \textbf{Viable para TinyTapeout:} El tile 4$\times$2
+          ($\approx$668$\times$216\,µm) puede alojar este diseño completo.
+\end{itemize}
+
+%===============================================================
+\section{Programación de la FPGA y Prueba UART}
+%===============================================================
+
+\subsection{Conexión de la board}
+
+\begin{enumerate}
+    \item Conecta el cable USB-C al puerto \textbf{JTAG/UART} de la
+          Tang Primer 20K.
+    \item Verifica en el Administrador de dispositivos que aparecen
+          \textbf{USB Serial Converter A} (JTAG) y
+          \textbf{B} (UART de datos).
+\end{enumerate}
+
+\subsection{Descarga del Bitstream con Gowin Programmer}
+
+\begin{enumerate}
+    \item En Gowin EDA, ve a \textbf{Tools $\rightarrow$ Programmer}.
+    \item Haz clic en \textbf{Scan Device} para detectar la FPGA.
+    \item Doble clic sobre el ícono del dispositivo y configura:
+          \begin{itemize}
+              \item \textit{Access Mode:} \textbf{SRAM Mode} (temporal,
+                    se borra al quitar energía).
+              \item \textit{FS File:} ruta al archivo \texttt{.fs} en
+                    \texttt{impl/pnr/}.
+          \end{itemize}
+    \item Presiona \textbf{Program/Configure} ($\blacktriangleright$).
+    \item Resultado esperado en el log: \texttt{Info: Finished. Cost X second(s)}.
+\end{enumerate}
+
+\begin{nota}
+Para programación permanente usa \textbf{Flash Program}. Requiere más
+tiempo y cuidado para no dañar la flash de la board. Para desarrollo
+iterativo, \textbf{SRAM Mode} es suficiente.
+\end{nota}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\linewidth]{Img_Gowin/P1.png}
+    
+    \caption{Primero comprobamos que el programa reconozca la placa y damos click en save.}
+    \label{fig:programmer}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\linewidth]{Img_Gowin/P2.png}
+    
+    \caption{Transferencia del Bitstream final a la memoria SRAM interna, verificamos que esté seleciconado el archivo .fs y le damos en el recuadro de arriba para cargar el programa en la placa.}
+    \label{fig:programmer}
+\end{figure}
+\subsection{Validación por UART}
+
+El procesador FemtoUN comienza a ejecutar el firmware de inmediato
+en cuanto se completa la programación.
+
+\begin{enumerate}
+    \item Abre \textbf{PuTTY} (o el monitor serie de Arduino).
+    \item Configuración: \textbf{Serial}, número de puerto \textbf{COM}
+          del \textbf{canal B}, velocidad \textbf{115\,200 baudios}, 8N1.
+    \item Presiona el botón de \textbf{Reset} físico en la board.
+    \item En pantalla aparece el mensaje enviado por el núcleo RISC-V.
+\end{enumerate}
+
+\begin{figure}[H]
+    \centering
+     \includegraphics[width=1\linewidth]{Img_Gowin/2.jpeg}
+   
+    \caption{Consola de recepción verificando la funcionalidad del periférico UART.}
+    \label{fig:putty}
+\end{figure}
+
+%===============================================================
+\section{Resolución de Problemas Comunes}
+%===============================================================
+
+\begin{table}[H]
+\centering
+\caption{Problemas frecuentes y soluciones}
+\begin{tabular}{@{}p{4.5cm}p{4cm}p{5cm}@{}}
+\toprule
+\textbf{Problema} & \textbf{Causa} & \textbf{Solución} \\
+\midrule
+Error CT1136 banco 5        & Pines SPI a 1.8V         & Eliminar pines SPI del \texttt{.cst} \\
+Pin no existe en el chip    & Pinout incorrecto         & Verificar esquemático de Sipeed \\
+Pines duplicados en .cst    & Ediciones superpuestas    & Ctrl+A, Delete, reescribir \\
+No aparece COM en Windows   & Driver no instalado       & Instalar GowinUSBCableDriverV5 \\
+Cable USB no detectado      & Cable solo de carga       & Usar cable USB-C con datos \\
+``Gowin Device not found''  & Frecuencia JTAG alta      & Bajar a 1\,MHz en Cable Setting \\
+Firmware no ejecuta         & Dirección de enlace mal   & Verificar linker script en \texttt{0x0} \\
+PuTTY sin salida            & COM incorrecto            & Usar canal B (UART), no A (JTAG) \\
+\texttt{config.mk} no encontrado & Falta en repositorio & Crear manualmente con \texttt{ARCH=rv32i} \\
+Latches en síntesis         & \texttt{reg writeBack}    & Usar \texttt{wire writeBack} del repo VLSI \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+%===============================================================
+\section{Resumen del Flujo Completo}
+%===============================================================
+
+\begin{tcolorbox}[colback=unal!8, colframe=unal,
+                  title=Lista de chequeo: flujo completo FemtoUN]
+\begin{enumerate}
+    \item \textbf{Instalar herramientas:} WSL Ubuntu, \lstinline{iverilog},
+          \lstinline{gtkwave}, \lstinline{gcc-riscv64-unknown-elf}, Gowin EDA.
+    \item \textbf{Clonar repositorios:} \lstinline{git clone} de FemtoUN y VLSI.
+    \item \textbf{Compilar firmware:} GCC con \texttt{-march=rv32i}, linker
+          en \texttt{0x0}, generar \texttt{firmware.hex}.
+    \item \textbf{Simular:} \lstinline{iverilog + vvp} $\rightarrow$
+          genera \texttt{bench.vcd}.
+    \item \textbf{Analizar ondas:} GTKWave muestra PC, instrucciones y
+          estados de la FSM.
+    \item \textbf{Sintetizar:} Gowin EDA $\rightarrow$ Synthesize
+          $\rightarrow$ Place \& Route $\rightarrow$ \texttt{.fs}.
+    \item \textbf{Verificar recursos:} Place \& Route Report
+          (6\% LUT, 14\% BSRAM).
+    \item \textbf{Programar FPGA:} Gowin Programmer $\rightarrow$
+          SRAM Program.
+    \item \textbf{Verificar UART:} PuTTY en COM canal B, 115\,200 baudios.
+\end{enumerate}
+\end{tcolorbox}
+
+%===============================================================
+\begin{thebibliography}{9}
+
+\bibitem{repositorio}
+L. Alarcón,
+\textit{Repositorio del Proyecto de Grado -- Procesador FemtoUN},
+\url{https://github.com/LauraAlarcon14/FemtoUN}, 2026.
+
+\bibitem{vlsi}
+C. Camargo,
+\textit{Repositorio VLSI -- UNAL},
+\url{https://github.com/cicamargoba/VLSI}, 2024.
+
+\bibitem{brunolevy}
+B. Levy, M. Koch,
+\textit{FemtoRV32: A Minimalistic RISC-V CPU},
+\url{https://github.com/BrunoLevy/learn-fpga}, 2020.
+
+\bibitem{riscvspec}
+RISC-V International,
+\textit{The RISC-V Instruction Set Manual, Volume I: Unprivileged ISA},
+Versión 2.2, 2017.
+
+\bibitem{tinytapeout}
+TinyTapeout,
+\textit{TinyTapeout Documentation},
+\url{https://tinytapeout.com}, 2023.
+
+\bibitem{sipeed}
+Sipeed,
+\textit{Tang Primer 20K Schematic},
+\url{https://github.com/sipeed/TangPrimer-20K}, 2022.
+
+\bibitem{gowinedatools}
+Gowin Semiconductor Corporation,
+\textit{Gowin EDA Technical Support Portal},
+\url{https://gowinsemi.com/en/support/download_eda/}, 2025.
+
+\end{thebibliography}
+
+\end{document}

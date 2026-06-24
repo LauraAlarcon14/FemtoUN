@@ -1,0 +1,356 @@
+\documentclass[12pt,a4paper]{article}
+
+% --- Paquetes ---
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[spanish]{babel}
+\usepackage{graphicx}
+\usepackage{geometry}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage{titlesec}
+\usepackage{caption}
+\usepackage{booktabs}
+\usepackage{float}
+\usepackage{amsmath}
+\usepackage{fancyhdr}
+\usepackage{parskip}
+
+\geometry{top=2.5cm, bottom=2.5cm, left=3cm, right=3cm}
+
+% --- Estilo de página ---
+\pagestyle{fancy}
+\fancyhf{}
+\rhead{Controlador LCD en FPGA}
+\lhead{Documentación Técnica}
+\rfoot{Página \thepage}
+
+% --- Colores para código Verilog ---
+\definecolor{vgreen}{RGB}{0,128,0}
+\definecolor{vblue}{RGB}{0,0,200}
+\definecolor{vred}{RGB}{180,0,0}
+\definecolor{vgray}{RGB}{100,100,100}
+\definecolor{codebg}{RGB}{248,248,248}
+
+\lstdefinelanguage{Verilog}{
+  keywords={module, endmodule, input, output, wire, reg, assign, always, begin, end,
+            if, else, parameter, localparam, posedge, negedge, ifdef, endif, define, timescale},
+  keywordstyle=\color{vblue}\bfseries,
+  comment=[l]{//},
+  commentstyle=\color{vgreen}\itshape,
+  morestring=[b]",
+  stringstyle=\color{vred},
+  sensitive=true
+}
+
+\lstset{
+  language=Verilog,
+  backgroundcolor=\color{codebg},
+  basicstyle=\ttfamily\footnotesize,
+  frame=single,
+  rulecolor=\color{gray!40},
+  numbers=left,
+  numberstyle=\tiny\color{vgray},
+  numbersep=6pt,
+  breaklines=true,
+  breakatwhitespace=false,
+  tabsize=4,
+  showstringspaces=false,
+  captionpos=b
+}
+
+% --- Título ---
+\title{
+  \vspace{-1cm}
+  {\Large \textbf{Documentación Técnica}}\\[0.4cm]
+  {\large Controlador de Pantalla LCD en FPGA}\\[0.3cm]
+  {\normalsize Implementación en Verilog para Sipeed Tang Primer 20K}\\
+  \rule{\textwidth}{0.4pt}
+}
+\date{\today}
+%
+% =============================================
+\begin{document}
+% =============================================
+
+\maketitle
+\thispagestyle{fancy}
+\newpage
+\tableofcontents
+\newpage
+
+% -----------------------------------------------
+\section{Introducción}
+% -----------------------------------------------
+
+Este documento describe el diseño e implementación de un controlador de pantalla LCD RGB utilizando una FPGA \textbf{Gowin GW2A-18} montada sobre la placa de desarrollo \textbf{Sipeed Tang Primer 20K}. El sistema genera señales de temporización VGA estándar para controlar una pantalla de resolución \textbf{800×480 píxeles} a \textbf{60 Hz}, y muestra un patrón de barras horizontales de colores para verificar el correcto funcionamiento del hardware.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.52\textwidth]{WhatsApp Image 2026-06-16 at 3.30.50 AM.jpeg}
+  \caption{Resultado visual: pantalla LCD mostrando barras horizontales de colores, conectada a la placa Sipeed Tang Primer 20K mediante cable FPC.}
+  \label{fig:resultado}
+\end{figure}
+
+El código está estructurado en tres módulos Verilog principales que trabajan en cadena, más un archivo de restricciones físicas (\textit{Physical Constraints File}) que mapea las señales lógicas a los pines físicos del encapsulado del FPGA.
+
+% -----------------------------------------------
+\section{Arquitectura General del Sistema}
+% -----------------------------------------------
+
+El diseño sigue una arquitectura jerárquica de tres capas:
+
+\begin{table}[H]
+  \centering
+  \caption{Módulos del sistema y sus responsabilidades}
+  \begin{tabular}{lll}
+    \toprule
+    \textbf{Módulo} & \textbf{Función} & \textbf{Entradas clave} \\
+    \midrule
+    \texttt{top}       & Integrador de alto nivel      & \texttt{clk}, \texttt{rst\_n} \\
+    \texttt{lcd\_ctrl} & Generador de temporización    & \texttt{clk}, datos de pixel \\
+    \texttt{lcd\_data} & Generador de contenido visual & Coordenadas \texttt{xpos/ypos} \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+El flujo de datos es el siguiente:
+
+\[
+\texttt{top} \rightarrow \texttt{pll\_40m} \xrightarrow{40\,\text{MHz}} \texttt{lcd\_ctrl} \xrightarrow{\text{xpos, ypos}} \texttt{lcd\_data} \xrightarrow{\text{rgb[23:0]}} \text{Pantalla LCD}
+\]
+
+% -----------------------------------------------
+\section{Módulo \texttt{top} — Nivel de Integración}
+% -----------------------------------------------
+
+\subsection{Descripción}
+
+El módulo \texttt{top} es la capa de integración. Su rol es instanciar y conectar todos los submódulos. También realiza la adaptación del bus de color de 24 bits interno a los buses de salida del estándar RGB565:
+
+\begin{itemize}
+  \item \textbf{Rojo (R):} 5 bits → \texttt{lcd\_rgb[4+16 : 16]}
+  \item \textbf{Verde (G):} 6 bits → \texttt{lcd\_rgb[5+8 : 8]}
+  \item \textbf{Azul (B):} 5 bits → \texttt{lcd\_rgb[4 : 0]}
+\end{itemize}
+
+Esto se logra mediante el parámetro \texttt{para = 8}, que define el desplazamiento de bits para extraer cada canal de color del bus de 24 bits.
+
+\subsection{Código}
+
+\begin{lstlisting}[caption={Módulo top: integración y asignación de canales de color}]
+module top (
+    input           clk,
+    input           rst_n,
+    output [4:0]    lcd_r,
+    output [5:0]    lcd_g,
+    output [4:0]    lcd_b,
+    output          lcd_de,
+    output          lcd_hsync,
+    output          lcd_vsync,
+    output          lcd_clk,
+    output          lcd_bl
+);
+
+assign lcd_bl = 1'b1; // Backlight siempre encendido
+
+parameter para = 8;
+
+assign lcd_r[4:0] = lcd_rgb[4 + para*2 : para*2]; // bits [20:16]
+assign lcd_g[5:0] = lcd_rgb[5 + para*1 : para*1]; // bits [13:8]
+assign lcd_b[4:0] = lcd_rgb[4 + para*0 : para*0]; // bits [4:0]
+\end{lstlisting}
+
+\subsection{Señal de retroiluminación}
+
+La señal \texttt{lcd\_bl} (backlight) se fuerza permanentemente a \texttt{1'b1}, lo que mantiene la retroiluminación de la pantalla activa en todo momento. Esta señal está mapeada al pin \texttt{E10} del FPGA.
+
+% -----------------------------------------------
+\section{Módulo \texttt{lcd\_ctrl} — Controlador de Temporización}
+% -----------------------------------------------
+
+\subsection{Descripción}
+
+Este módulo implementa el generador de temporización VGA para la resolución \textbf{800×480 a 40 MHz}. Genera las señales de sincronización horizontal (\texttt{lcd\_hs}) y vertical (\texttt{lcd\_vs}), la señal de habilitación de datos (\texttt{lcd\_de}) y las coordenadas de pixel activo (\texttt{lcd\_xpos}, \texttt{lcd\_ypos}).
+
+\subsection{Parámetros de temporización}
+
+Los parámetros siguen la especificación estándar del modo 800×480@60Hz:
+
+\begin{table}[H]
+  \centering
+  \caption{Parámetros de temporización horizontal (800×480 @ 40 MHz)}
+  \begin{tabular}{llr}
+    \toprule
+    \textbf{Parámetro} & \textbf{Descripción} & \textbf{Valor (ciclos)} \\
+    \midrule
+    \texttt{H\_SYNC}  & Pulso de sincronismo horizontal  & 10  \\
+    \texttt{H\_BACK}  & Porche trasero horizontal         & 46  \\
+    \texttt{H\_DISP}  & Período activo (píxeles visibles) & 800 \\
+    \texttt{H\_FRONT} & Porche delantero horizontal       & 210 \\
+    \texttt{H\_TOTAL} & Total de ciclos por línea         & 1066 \\
+    \midrule
+    \texttt{V\_SYNC}  & Pulso de sincronismo vertical     & 4   \\
+    \texttt{V\_BACK}  & Porche trasero vertical           & 23  \\
+    \texttt{V\_DISP}  & Líneas visibles                  & 480 \\
+    \texttt{V\_FRONT} & Porche delantero vertical         & 13  \\
+    \texttt{V\_TOTAL} & Total de líneas por cuadro        & 520 \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\subsection{Funcionamiento del contador horizontal}
+
+El módulo emplea dos contadores de 12 bits (\texttt{hcnt} y \texttt{vcnt}). El contador horizontal se incrementa en cada flanco de subida del reloj y se reinicia al llegar a \texttt{H\_TOTAL - 1}. Al completarse una línea (\texttt{hcnt == H\_TOTAL - 1}), el contador vertical se incrementa.
+
+\begin{lstlisting}[caption={Contador horizontal en lcd\_ctrl}]
+always @ (posedge clk or negedge rst_n)
+begin
+    if (!rst_n)
+        hcnt <= 12'd0;
+    else if (hcnt < H_TOTAL - 1'b1)
+        hcnt <= hcnt + 1'b1;
+    else
+        hcnt <= 12'd0;
+end
+
+assign lcd_hs = (hcnt <= H_SYNC - 1'b1) ? 1'b0 : 1'b1;
+\end{lstlisting}
+
+\subsection{Señal \texttt{lcd\_de} y coordenadas de pixel}
+
+La señal \texttt{lcd\_de} (Display Enable) se activa únicamente durante la zona activa, definida por:
+
+\begin{equation}
+  \texttt{lcd\_de} = 1 \iff h_{cnt} \in [H\_SYNC + H\_BACK,\; H\_SYNC + H\_BACK + H\_DISP) \;\wedge\; v_{cnt} \in [V\_SYNC + V\_BACK,\; V\_SYNC + V\_BACK + V\_DISP)
+\end{equation}
+
+Las coordenadas de pixel \texttt{lcd\_xpos} y \texttt{lcd\_ypos} se calculan restando el tiempo de porche del valor del contador. Se anticipa un ciclo de reloj (\texttt{H\_AHEAD = 1}) para compensar la latencia del pipeline en \texttt{lcd\_data}.
+
+% -----------------------------------------------
+\section{Módulo \texttt{lcd\_data} — Generador de Contenido}
+% -----------------------------------------------
+
+\subsection{Descripción}
+
+Este módulo recibe las coordenadas del pixel activo y produce el color de 24 bits correspondiente (\texttt{lcd\_data[23:0]}). Admite cuatro modos de visualización seleccionables mediante directivas de compilación condicional (\texttt{`ifdef}):
+
+\begin{table}[H]
+  \centering
+  \caption{Modos de visualización disponibles}
+  \begin{tabular}{ll}
+    \toprule
+    \textbf{Define} & \textbf{Descripción} \\
+    \midrule
+    \texttt{VGA\_HORIZONTAL\_COLOR} & Barras horizontales de colores (modo activo) \\
+    \texttt{VGA\_VERTICAL\_COLOR}   & Barras verticales de colores \\
+    \texttt{VGA\_GRAY\_GRAPH}       & Degradado en escala de grises \\
+    \texttt{VGA\_GRAFTAL\_GRAPH}    & Patrón fractal (producto de coordenadas) \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\subsection{Colores definidos}
+
+Los colores se definen como macros de 24 bits en formato \texttt{RGB 8:8:8}:
+
+\begin{lstlisting}[caption={Definición de colores en lcd\_data}]
+`define RED    24'hFF0000
+`define GREEN  24'h00FF00
+`define BLUE   24'h0000FF
+`define WHITE  24'hFFFFFF
+`define BLACK  24'h000000
+`define YELLOW 24'hFFFF00
+`define CYAN   24'hFF00FF
+`define ROYAL  24'h00FFFF
+\end{lstlisting}
+
+\subsection{Modo de barras horizontales}
+
+En el modo activo (\texttt{VGA\_HORIZONTAL\_COLOR}), la pantalla se divide en 8 franjas horizontales iguales de \texttt{V\_DISP/8 = 60} líneas cada una. El color se asigna según la coordenada vertical \texttt{lcd\_ypos}:
+
+\begin{lstlisting}[caption={Lógica de barras horizontales}]
+always@(posedge clk or negedge rst_n)
+begin
+    if(!rst_n)
+        lcd_data <= 24'h0;
+    else begin
+        if      (lcd_ypos < (V_DISP/8)*1) lcd_data <= `RED;
+        else if (lcd_ypos < (V_DISP/8)*2) lcd_data <= `GREEN;
+        else if (lcd_ypos < (V_DISP/8)*3) lcd_data <= `BLUE;
+        else if (lcd_ypos < (V_DISP/8)*4) lcd_data <= `WHITE;
+        else if (lcd_ypos < (V_DISP/8)*5) lcd_data <= `BLACK;
+        else if (lcd_ypos < (V_DISP/8)*6) lcd_data <= `YELLOW;
+        else if (lcd_ypos < (V_DISP/8)*7) lcd_data <= `CYAN;
+        else                               lcd_data <= `ROYAL;
+    end
+end
+\end{lstlisting}
+
+El resultado visual puede verse en la Figura~\ref{fig:resultado}: ocho franjas de colores perfectamente definidas de arriba hacia abajo.
+
+% -----------------------------------------------
+\section{Restricciones Físicas (Pin Constraints)}
+% -----------------------------------------------
+
+El archivo de restricciones \texttt{.cst} mapea cada señal lógica al pin físico del encapsulado \textbf{GW2A-LV18PG256C8/I7} (256 pines BGA). Todos los pines de la interfaz LCD operan en estándar \textbf{LVCMOS33} (3.3V) con pull-up habilitado y drive de 8 mA.
+
+\begin{table}[H]
+  \centering
+  \caption{Asignación de pines principales}
+  \begin{tabular}{lll}
+    \toprule
+    \textbf{Señal} & \textbf{Pin FPGA} & \textbf{Descripción} \\
+    \midrule
+    \texttt{clk}      & H11 & Reloj de entrada (25 MHz externo) \\
+    \texttt{lcd\_clk} & R9  & Reloj de pixel hacia la pantalla (40 MHz) \\
+    \texttt{lcd\_hs}  & A15 & Sincronismo horizontal \\
+    \texttt{lcd\_vs}  & D14 & Sincronismo vertical \\
+    \texttt{lcd\_de}  & E15 & Habilitación de datos \\
+    \texttt{lcd\_bl}  & E10 & Control de retroiluminación \\
+    \texttt{lcd\_r[4:0]} & N6--L9 & Canal rojo (5 bits) \\
+    \texttt{lcd\_g[5:0]} & D10--D11 & Canal verde (6 bits) \\
+    \texttt{lcd\_b[4:0]} & B14--B12 & Canal azul (5 bits) \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+% -----------------------------------------------
+\section{PLL y Generación de Reloj}
+% -----------------------------------------------
+
+El sistema recibe un reloj externo de entrada (típicamente 27 MHz en la Tang Primer 20K) y lo procesa mediante un bloque \textbf{PLL} (\textit{Phase-Locked Loop}) instanciado como \texttt{pll\_40m}. Este PLL sintetiza la frecuencia de pixel requerida de \textbf{40 MHz} para el modo 800×480@60Hz.
+
+La señal de salida del PLL (\texttt{clk\_out}) alimenta directamente al módulo \texttt{lcd\_ctrl}, que a su vez la propaga a la pantalla como \texttt{lcd\_clk}. El módulo \texttt{lcd\_data} recibe el reloj original de entrada para mantenerse sincronizado con el dominio principal.
+
+% -----------------------------------------------
+\section{Flujo de Datos Completo}
+% -----------------------------------------------
+
+El siguiente diagrama resume el recorrido de la señal desde el reloj hasta la pantalla:
+
+\begin{enumerate}
+  \item El reloj de entrada entra al \texttt{top} por el pin \texttt{H11}.
+  \item El \texttt{pll\_40m} multiplica/divide la frecuencia para obtener 40 MHz (\texttt{clk\_out}).
+  \item \texttt{lcd\_ctrl} utiliza \texttt{clk\_out} para generar los contadores \texttt{hcnt} y \texttt{vcnt}.
+  \item Las coordenadas \texttt{lcd\_xpos} y \texttt{lcd\_ypos} se envían a \texttt{lcd\_data}.
+  \item \texttt{lcd\_data} devuelve \texttt{lcd\_data[23:0]} con el color del pixel.
+  \item \texttt{lcd\_ctrl} aplica la máscara \texttt{lcd\_de} y entrega \texttt{lcd\_rgb[23:0]}.
+  \item El módulo \texttt{top} desempaqueta los canales R(5), G(6), B(5) hacia los pines físicos.
+\end{enumerate}
+
+% -----------------------------------------------
+\section{Conclusiones}
+% -----------------------------------------------
+
+El diseño implementa correctamente un controlador LCD para la interfaz RGB paralela de 16 bits (RGB565) usando la FPGA Gowin GW2A-18. Los puntos clave del diseño son:
+
+\begin{itemize}
+  \item \textbf{Modularidad:} La separación entre temporización (\texttt{lcd\_ctrl}) y contenido (\texttt{lcd\_data}) permite cambiar el patrón visual sin modificar la lógica de sincronización.
+  \item \textbf{Flexibilidad:} Los cuatro modos de visualización seleccionables con \texttt{`ifdef} facilitan pruebas rápidas de diferentes patrones.
+  \item \textbf{Anticipación de datos:} El parámetro \texttt{H\_AHEAD = 1} compensa la latencia de registro del módulo de datos, evitando desplazamientos horizontales en la imagen.
+  \item \textbf{Resultado verificado:} La imagen capturada (Figura~\ref{fig:resultado}) confirma que las 8 barras de color se despliegan correctamente en la pantalla física.
+\end{itemize}
+
+\end{document}

@@ -1,0 +1,640 @@
+% ============================================================
+%  Informe de Verificación — Programa de Eco ASCII
+%  FemtoUN SoC — Universidad Nacional de Colombia
+% ============================================================
+\documentclass[12pt, a4paper]{article}
+
+% --- Paquetes ---
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[spanish,es-noshorthands]{babel}
+\usepackage{geometry}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage{fancyhdr}
+\usepackage{titlesec}
+\usepackage{caption}
+\usepackage{float}
+\usepackage{amsmath}
+\usepackage{parskip}
+\usepackage{enumitem}
+\usepackage{tcolorbox}
+
+\setlength{\headheight}{14pt}
+\geometry{
+  top=2.5cm, bottom=2.5cm,
+  left=2.5cm, right=2.5cm
+}
+
+% --- Colores ---
+\definecolor{codered}{RGB}{180,30,30}
+\definecolor{codegreen}{RGB}{0,120,60}
+\definecolor{codegray}{RGB}{100,100,100}
+\definecolor{codeblue}{RGB}{0,60,160}
+\definecolor{backcolor}{RGB}{248,248,248}
+\definecolor{framecolor}{RGB}{200,200,200}
+
+% --- Estilo listings C ---
+\lstdefinestyle{cstyle}{
+  backgroundcolor=\color{backcolor},
+  commentstyle=\color{codegreen}\itshape,
+  keywordstyle=\color{codeblue}\bfseries,
+  numberstyle=\tiny\color{codegray},
+  stringstyle=\color{codered},
+  basicstyle=\ttfamily\footnotesize,
+  language=C,
+  breakatwhitespace=false,
+  breaklines=true,
+  captionpos=b,
+  keepspaces=true,
+  numbers=left,
+  numbersep=8pt,
+  showspaces=false,
+  showstringspaces=false,
+  showtabs=false,
+  tabsize=3,
+  frame=single,
+  rulecolor=\color{framecolor},
+  xleftmargin=15pt,
+  xrightmargin=5pt,
+  morekeywords={volatile, uint32_t}
+}
+
+% --- Estilo listings consola ---
+\lstdefinestyle{consolestyle}{
+  backgroundcolor=\color{black},
+  basicstyle=\ttfamily\footnotesize\color{white},
+  breaklines=true,
+  captionpos=b,
+  frame=single,
+  rulecolor=\color{codegray},
+  xleftmargin=10pt,
+  xrightmargin=5pt,
+  numbers=none
+}
+
+% --- Encabezado y pie de página ---
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small FemtoUN SoC --- Verificación de Canal UART por Eco ASCII}
+\fancyhead[R]{\small Arquitectura de Computadores}
+\fancyfoot[C]{\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+
+% --- Formato de secciones ---
+\titleformat{\section}{\large\bfseries}{}{0em}{\thesection\quad}[\titlerule]
+\titleformat{\subsection}{\normalsize\bfseries}{}{0em}{\thesubsection\quad}
+
+% --- Metadatos PDF ---
+\hypersetup{
+  colorlinks=true,
+  linkcolor=codeblue,
+  urlcolor=codeblue,
+  citecolor=codeblue,
+  pdftitle={Verificación de Canal UART por Eco ASCII --- FemtoUN},
+  pdfauthor={Universidad Nacional de Colombia}
+}
+
+% ============================================================
+\begin{document}
+% ============================================================
+
+% --- Portada ---
+\begin{titlepage}
+  \centering
+  \vspace*{1.5cm}
+  {\Large\bfseries SoC RISC-V en FPGA con FemtoRV32\\[0.4em]
+  \large Verificación del Canal UART mediante\\Programa de Eco ASCII\par}
+  \vspace{1.5cm}
+  \rule{\textwidth}{0.4pt}\\[0.5em]
+  {\normalsize
+    Universidad Nacional de Colombia\\
+    Programa: Ingeniería Electrónica\\
+    Asignatura: Arquitectura de Computadores\\[0.8em]
+    FPGA: Tang Primer 20K --- GW2A-LV18PG256C8/I7\\
+    Procesador: FemtoRV32 Quark (RV32I)\\
+    Herramienta: Gowin EDA 1.9.12 $|$ Toolchain: xpack-riscv-none-elf-gcc-15.2.0\\[0.8em]
+    Mayo 2026
+  }\\[1.2em]
+  \rule{\textwidth}{0.4pt}
+  \vspace{1.2cm}
+
+  \begin{tcolorbox}[colback=backcolor, colframe=framecolor, width=\textwidth]
+    \small\textbf{Resumen }\\[0.5em]
+    Este documento describe el diseño, implementación y verificación de un programa de
+    eco ASCII ejecutado sobre el SoC FemtoUN. El programa constituye la etapa de
+    validación del subsistema de comunicación UART previa a la implementación de la
+    calculadora bare-metal: confirma la integridad bidireccional del canal serial, el
+    correcto funcionamiento del mapa de registros del periférico, y establece las
+    condiciones operativas que el firmware de mayor complejidad presupone. Se
+    documentan cuatro hallazgos críticos identificados durante la depuración, cada uno
+    con causa raíz, síntoma observable y corrección aplicada.
+  \end{tcolorbox}
+
+  \vspace{1cm}
+  {\small Repositorio: \texttt{femtorv2-soc-fpga} $|$ Licencia MIT $|$ Verilog + C bare-metal}
+\end{titlepage}
+
+% --- Índice ---
+\tableofcontents
+\newpage
+
+% ============================================================
+\section{Contexto y Objetivo de la Verificación}
+% ============================================================
+
+\subsection{Posición en el flujo de desarrollo}
+
+El SoC FemtoUN, descrito en detalle en el informe de arquitectura general del proyecto,
+integra el procesador FemtoRV32 Quark, una memoria BRAM de 8192 palabras de 32 bits y un
+periférico UART mapeado en el espacio de direcciones de la CPU. Una vez confirmado el
+correcto funcionamiento del sistema en su dimensión de ejecución de instrucciones, el
+siguiente punto crítico a validar es la cadena completa de comunicación: desde que el
+firmware escribe en el registro de datos del UART hasta que el carácter aparece en la
+terminal del usuario, y en sentido inverso, desde que el usuario pulsa una tecla hasta que
+el byte queda disponible para lectura en el registro de recepción.
+
+El programa de eco ASCII cumple exactamente esta función: recibe cada byte transmitido desde
+la terminal y lo devuelve de inmediato, acompañado del valor decimal de su código ASCII. Este
+comportamiento simple es suficiente para ejercitar simultáneamente la lógica de transmisión,
+la lógica de recepción, el manejo de las banderas de estado del periférico y la sincronización
+entre el firmware y el hardware, sin la carga adicional de lógica de aplicación que
+introduciría cualquier programa más complejo.
+
+\subsection{Objetivos específicos}
+
+\begin{enumerate}[leftmargin=*, label=\arabic*.]
+  \item Verificar la transmisión correcta de caracteres ASCII desde el firmware hacia
+        la terminal PuTTY a través del periférico UART.
+  \item Verificar la recepción correcta de bytes enviados desde la terminal, incluyendo
+        la lectura del registro de datos y la gestión de la bandera \texttt{rx\_avail}.
+  \item Confirmar que el protocolo de acceso a los registros mapeados en memoria del
+        periférico UART opera según la especificación del hardware.
+  \item Identificar y documentar los problemas encontrados durante la depuración del
+        canal de comunicación, estableciendo así las condiciones de operación correctas
+        para el firmware de la calculadora.
+\end{enumerate}
+
+% ============================================================
+\section{Diseño del Firmware de Eco}
+% ============================================================
+
+\subsection{Principio de operación}
+
+El programa implementa un lazo de eco continuo: espera la llegada de un byte desde la
+terminal, lo almacena, imprime una línea de la forma \texttt{Tecla: X ASCII: N} donde
+\texttt{X} es el carácter recibido y \texttt{N} su valor decimal, y retorna al estado de
+espera. No existe manejo de comandos ni lógica de estado adicional; la sencillez es
+deliberada, ya que cualquier comportamiento inesperado del sistema puede atribuirse
+directamente al canal de comunicación y no a la lógica de la aplicación.
+
+\subsection{Acceso al periférico UART desde C}
+
+El periférico UART expone dos registros en el espacio de direcciones de la CPU. La manera
+correcta de referenciarlos desde firmware bare-metal es mediante macros de preprocesador,
+no mediante punteros globales con valor inicial, por razones que se detallan en la sección
+de hallazgos (véase FIX~2).
+
+\begin{lstlisting}[style=cstyle, caption={Definición de acceso a registros UART mediante macros.}]
+#define uart_data  ((volatile int *)0x00400008)
+#define uart_ctrl  ((volatile int *)0x00400010)
+\end{lstlisting}
+
+El cualificador \texttt{volatile} es indispensable: sin él, el compilador puede eliminar
+el bucle de espera activa al detectar que la variable no es modificada por el propio hilo
+de ejecución, produciendo firmware que falla en hardware sin mostrar ningún error en
+compilación.
+
+\subsection{Protocolo de transmisión de un byte}
+
+La transmisión de un byte requiere tres pasos secuenciales. Primero, verificar que el
+transmisor no se encuentra procesando un envío anterior consultando el bit~9 del registro
+de control (\texttt{tx\_busy}). Segundo, escribir el byte en el registro de datos.
+Tercero, generar el pulso de escritura activando el bit~0 (\texttt{tx\_wr}) y
+desactivándolo en el ciclo siguiente.
+
+\begin{lstlisting}[style=cstyle, caption={Función de transmisión de un byte por UART.}]
+void enviar_byte(char c) {
+    while (*uart_ctrl & (1 << 9));  /* esperar tx_busy = 0 */
+    *uart_data = (int)c;
+    *uart_ctrl = 1;                 /* tx_wr = 1: pulso de inicio */
+    *uart_ctrl = 0;                 /* tx_wr = 0: fin del pulso   */
+}
+\end{lstlisting}
+
+\subsection{Protocolo de recepción de un byte}
+
+La recepción requiere verificar la disponibilidad de datos mediante el bit~8
+(\texttt{rx\_avail}) antes de leer el registro de datos, y confirmar la lectura
+mediante un pulso en el bit~1 (\texttt{rx\_ack}). Una espera adicional hasta que
+\texttt{rx\_avail} baje es necesaria para evitar que el firmware procese el mismo byte
+más de una vez (véase FIX~3).
+
+\begin{lstlisting}[style=cstyle, caption={Secuencia completa de recepción de un byte.}]
+char recibir_byte(void) {
+    char t;
+    while (!(*uart_ctrl & (1 << 8)));   /* esperar rx_avail = 1 */
+    t = (char)(*uart_data & 0xFF);
+    *uart_ctrl = 2;                     /* rx_ack = 1            */
+    *uart_ctrl = 0;                     /* rx_ack = 0            */
+    while (*uart_ctrl & (1 << 8));      /* esperar rx_avail = 0  */
+    return t;
+}
+\end{lstlisting}
+
+\subsection{Impresión del valor decimal sin operadores nativos}
+
+Dado que el procesador implementa únicamente el conjunto base RV32I, sin la extensión de
+multiplicación y división de hardware, cualquier uso de los operadores \texttt{/} y
+\texttt{\%} en el código fuente genera llamadas a funciones de biblioteca en tiempo de
+ejecución (\texttt{\_\_divsi3}, \texttt{\_\_modsi3}) que no se encuentran disponibles en
+un entorno compilado con \texttt{-nostartfiles} sin el soporte de \texttt{libgcc}. Por
+esta razón, la conversión del valor ASCII a su representación decimal se implementa
+mediante restas sucesivas para cada potencia de diez.
+
+\begin{lstlisting}[style=cstyle, caption={Impresión de entero en decimal sin uso de división ni módulo.}]
+void imprimir_numero(int n) {
+    int d; int iniciado = 0;
+    if (n == 0) { enviar_byte('0'); return; }
+    if (n < 0)  { enviar_byte('-'); n = -n; }
+
+    d = 0; while (n >= 100) { n -= 100; d++; }
+    if (d || iniciado) { enviar_byte('0' + d); iniciado = 1; }
+    d = 0; while (n >= 10)  { n -= 10;  d++; }
+    if (d || iniciado) { enviar_byte('0' + d); iniciado = 1; }
+    enviar_byte('0' + n);
+}
+\end{lstlisting}
+
+\noindent
+Esta implementación funciona correctamente para el rango de valores ASCII (0--127), que es
+el único rango que el programa de eco necesita imprimir. Para la calculadora, cuyo rango
+de resultados puede alcanzar valores del orden de $10^{9}$, se requiere extender la función
+a nueve potencias de diez, lo que se documenta en el informe correspondiente.
+
+\subsection{Lazo principal}
+
+\begin{lstlisting}[style=cstyle, caption={Lazo principal del programa de eco ASCII.}]
+void main(void) {
+    asm volatile("li sp, 0x00002000");
+
+    enviar_texto("Sistema listo. Esperando entrada...\r\n");
+
+    while (1) {
+        char tecla = recibir_byte();
+        enviar_texto("Tecla: ");
+        enviar_byte(tecla);
+        enviar_texto(" ASCII: ");
+        imprimir_numero((int)(unsigned char)tecla);
+        enviar_texto("\r\n");
+    }
+}
+\end{lstlisting}
+
+La inicialización explícita del puntero de pila mediante
+\texttt{asm volatile("li sp, 0x00002000")} es necesaria porque la compilación con
+\texttt{-nostartfiles} omite el código de arranque que normalmente establece este
+registro antes de transferir el control a \texttt{main}. Sin esta instrucción, las
+llamadas a funciones que usan la pila producen escrituras en direcciones arbitrarias.
+
+% ============================================================
+\section{Mapa de Registros del Periférico UART}
+% ============================================================
+
+El periférico UART mapeado en memoria expone dos direcciones al procesador. La tabla
+siguiente resume su función en el contexto del programa de eco.
+
+\begin{table}[H]
+  \centering
+  \caption{Registros del periférico UART accedidos por el firmware de eco.}
+  \begin{tabular}{p{3cm}p{2.5cm}p{1.5cm}p{6cm}}
+    \toprule
+    \textbf{Dirección} & \textbf{Nombre} & \textbf{Acceso} & \textbf{Descripción} \\
+    \midrule
+    \texttt{0x00400008} & \texttt{UART\_DATA} & R/W &
+      Escritura: byte a transmitir {[7:0]}. Lectura: último byte recibido {[7:0]}. \\[0.5em]
+    \texttt{0x00400010} & \texttt{UART\_CTRL} & R/W &
+      Ver tabla~\ref{tab:bits_ctrl}. \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\begin{table}[H]
+  \centering
+  \caption{Campos de bits del registro \texttt{0x00400010}.}
+  \label{tab:bits_ctrl}
+  \begin{tabular}{clll}
+    \toprule
+    \textbf{Bit} & \textbf{Nombre} & \textbf{Dir.} & \textbf{Descripción} \\
+    \midrule
+    0 & \texttt{tx\_wr}    & W & Pulso activo alto: inicia transmisión del byte en \texttt{UART\_DATA}. \\
+    1 & \texttt{rx\_ack}   & W & Pulso activo alto: confirma lectura y limpia \texttt{rx\_avail}. \\
+    2 & \texttt{LED}       & W & Control del LED de usuario. \\
+    7 & \texttt{rx\_error} & R & Error de trama: stop bit recibido como 0. \\
+    8 & \texttt{rx\_avail} & R & Byte recibido disponible para lectura. \\
+    9 & \texttt{tx\_busy}  & R & Transmisor ocupado procesando un envío. \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+% ============================================================
+\section{Parámetros del Sistema}
+% ============================================================
+
+\begin{table}[H]
+  \centering
+  \caption{Parámetros de hardware y software del entorno de verificación.}
+  \begin{tabular}{ll}
+    \toprule
+    \textbf{Parámetro} & \textbf{Valor} \\
+    \midrule
+    FPGA                & Tang Primer 20K --- GW2A-LV18PG256C8/I7 \\
+    Frecuencia de reloj & 27\,MHz \\
+    Baud rate UART      & 120\,000\,bps \\
+    Duración de trama   & $\approx 83.3\,\mu\text{s}$ (10 bits a 120\,kbps) \\
+    Ciclos por trama    & $27{,}000{,}000 \div 120{,}000 \times 10 = 2250$ ciclos \\
+    Memoria BRAM        & 8192 palabras de 32\,bits (32\,KiB) \\
+    Compilador          & xpack-riscv-none-elf-gcc 15.2.0 \\
+    Flags               & \texttt{-march=rv32i -mabi=ilp32 -Os -nostartfiles} \\
+    Terminal            & PuTTY --- COM9, 120000\,baud, ISO-8859-1 \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+% ============================================================
+\section{Hallazgos Durante la Depuración}
+% ============================================================
+
+Durante el proceso de validación del canal de comunicación se identificaron cuatro
+problemas que comprometían la operación correcta del sistema. Cada uno se documenta
+con su síntoma observable, causa raíz y corrección aplicada.
+
+\subsection{FIX 1 --- Configuración de codificación en la terminal}
+
+\textbf{Síntoma:} Algunos caracteres enviados desde la terminal producían en el receptor
+dos o más bytes en lugar de uno, con códigos ASCII que no correspondían al carácter
+pulsado. La letra \texttt{n} con tilde, por ejemplo, generaba una secuencia de dos bytes,
+y determinados caracteres de puntuación producían valores inesperados.
+
+\textbf{Causa:} PuTTY estaba configurado con codificación UTF-8. En este modo, cualquier
+carácter fuera del rango ASCII estándar (0--127) se representa como una secuencia
+multibyte según el estándar Unicode. El periférico UART opera byte a byte sin
+interpretación de codificación: cada byte recibido se trata como un carácter
+independiente. La discrepancia entre ambas representaciones produce lecturas incorrectas.
+
+\textbf{Corrección:} Cambiar la configuración de traducción de caracteres en PuTTY a
+ISO-8859-1 (Latin-1). En esta codificación cada carácter ocupa exactamente un byte y
+el valor numérico del byte coincide con el esperado por el firmware.
+
+\begin{table}[H]
+  \centering
+  \caption{Configuración de PuTTY para operación correcta con el firmware de eco.}
+  \begin{tabular}{ll}
+    \toprule
+    \textbf{Parámetro} & \textbf{Valor} \\
+    \midrule
+    Puerto serie              & COM9 \\
+    Velocidad                 & 120000\,baud \\
+    Bits de datos             & 8 \\
+    Paridad                   & None \\
+    Bits de parada            & 1 \\
+    Eco local                 & Force off \\
+    Edición local de línea    & Force off \\
+    Traducción (codificación) & ISO-8859-1 \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\subsection{FIX 2 --- Declaración de punteros UART como variables globales}
+
+\textbf{Síntoma:} El sistema no producía ninguna salida en la terminal pese a que el
+procesador ejecutaba instrucciones y el periférico UART respondía correctamente en
+simulación. Las señales de bus mostraban accesos a direcciones dentro del rango de la
+BRAM en lugar de las direcciones \texttt{0x00400008} y \texttt{0x00400010}.
+
+\textbf{Causa:} Los punteros al periférico UART estaban declarados como variables
+globales inicializadas:
+
+\begin{lstlisting}[style=cstyle, caption={Declaración incorrecta de punteros UART como variables globales.}]
+volatile int *uart_data = (volatile int *)0x00400008;  /* INCORRECTO */
+volatile int *uart_ctrl = (volatile int *)0x00400010;  /* INCORRECTO */
+\end{lstlisting}
+
+Con \texttt{-nostartfiles}, el código de arranque que copia la sección \texttt{.data}
+desde la memoria de programa hacia la memoria de datos nunca se ejecuta. Las variables
+globales inicializadas residen en \texttt{.data}, por lo que sus valores iniciales nunca
+se establecen: los punteros contienen basura y los accesos al UART se dirigen a
+posiciones arbitrarias de la BRAM.
+
+\textbf{Corrección:} Sustituir las variables globales por macros de preprocesador. Una
+macro no genera ninguna variable ni ocupa espacio en \texttt{.data}; el preprocesador
+reemplaza cada referencia por la expresión literal antes de la compilación, embebiendo
+las direcciones directamente como constantes en las instrucciones del programa.
+
+\begin{lstlisting}[style=cstyle, caption={Declaración correcta mediante macros de preprocesador.}]
+#define uart_data  ((volatile int *)0x00400008)  /* CORRECTO */
+#define uart_ctrl  ((volatile int *)0x00400010)  /* CORRECTO */
+\end{lstlisting}
+
+\subsection{FIX 3 --- Doble procesamiento del mismo byte recibido}
+
+\textbf{Síntoma:} Al pulsar una tecla en la terminal, la salida mostraba el mismo
+carácter y su valor ASCII impresos dos veces consecutivas, como si el firmware hubiera
+recibido el mismo byte en dos iteraciones distintas del lazo.
+
+\textbf{Causa:} La bandera \texttt{rx\_avail} (bit~8 del registro de control) no baja
+de forma inmediata en el mismo ciclo en que se escribe el pulso \texttt{rx\_ack}. Existe
+una latencia de al menos un ciclo de reloj entre la escritura del pulso de confirmación
+y la actualización de la bandera en la salida del registro. Si el firmware regresa al
+inicio del lazo y evalúa \texttt{rx\_avail} antes de que esta latencia expire, encuentra
+la bandera aún activa y procesa el mismo byte por segunda vez.
+
+\textbf{Corrección:} Agregar una espera activa después del pulso \texttt{rx\_ack} que
+mantiene al firmware bloqueado hasta que \texttt{rx\_avail} confirme su bajada:
+
+\begin{lstlisting}[style=cstyle, caption={Corrección del doble procesamiento mediante espera de rx\_avail.}]
+*uart_ctrl = 2;                    /* rx_ack = 1: confirmar lectura */
+*uart_ctrl = 0;                    /* rx_ack = 0: fin del pulso     */
+while (*uart_ctrl & (1 << 8));     /* esperar rx_avail = 0          */
+\end{lstlisting}
+
+\subsection{FIX 4 --- Tamaño insuficiente de la BRAM de programa}
+
+\textbf{Síntoma:} La síntesis completaba sin errores pero el sistema no ejecutaba ninguna
+instrucción al programar la FPGA. El análisis con \texttt{riscv-none-elf-size} reveló
+que el firmware superaba la capacidad definida en \texttt{bram\_hex.v}.
+
+\textbf{Causa:} La capacidad original de la BRAM, de 256 palabras de 32 bits (1\,KiB),
+resultó insuficiente para alojar el firmware junto con las cadenas de texto del código
+fuente. El proceso de síntesis no detecta este desbordamiento como error: simplemente
+descarta las instrucciones que no caben, produciendo un binario truncado que el procesador
+intenta ejecutar con resultados impredecibles.
+
+\textbf{Corrección:} Ampliar el tamaño de la BRAM de forma incremental, verificando con
+\texttt{riscv-none-elf-size} que el firmware cabe antes de sintetizar.
+
+\begin{table}[H]
+  \centering
+  \caption{Evolución del tamaño de la BRAM durante el proceso de depuración.}
+  \begin{tabular}{rrl}
+    \toprule
+    \textbf{Palabras} & \textbf{Capacidad} & \textbf{Resultado} \\
+    \midrule
+    256  & 1\,KiB  & Firmware truncado --- sistema sin respuesta \\
+    1024 & 4\,KiB  & Firmware truncado --- sistema sin respuesta \\
+    2048 & 8\,KiB  & Firmware truncado --- sistema sin respuesta \\
+    4096 & 16\,KiB & Firmware completo (versión sin \texttt{start.S}) \\
+    8192 & 32\,KiB & \textbf{Configuración actual} --- margen para la calculadora \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+% ============================================================
+\section{Resultados y Verificación Funcional}
+% ============================================================
+
+\subsection{Evidencia de operación correcta}
+
+La figura~\ref{fig:putty} muestra la salida del programa de eco en la terminal PuTTY.
+Para cada tecla pulsada por el usuario el sistema imprime el carácter seguido de su
+código ASCII en decimal. La secuencia capturada incluye dígitos, operadores aritméticos,
+caracteres alfabéticos y el código de retorno de carro (ASCII~13), cubriendo las
+categorías de entrada relevantes para la calculadora que se implementará a continuación.
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.52\textwidth]{asci}
+  \caption{Salida del programa de eco en PuTTY. Cada línea corresponde a una tecla
+           pulsada por el usuario; se muestra el carácter recibido y su código ASCII
+           en decimal.}
+  \label{fig:putty}
+\end{figure}
+
+\subsection{Análisis de la salida}
+
+La tabla siguiente contrasta una selección de entradas observadas en la captura con
+los valores esperados según la tabla ASCII estándar, confirmando la correspondencia exacta
+en todos los casos.
+
+\begin{table}[H]
+  \centering
+  \caption{Verificación de correspondencia entre carácter recibido y código ASCII impreso.}
+  \begin{tabular}{cccl}
+    \toprule
+    \textbf{Carácter} & \textbf{ASCII esperado} & \textbf{ASCII recibido} & \textbf{Categoría} \\
+    \midrule
+    \texttt{9}  & 57  & 57  & Dígito decimal \\
+    \texttt{+}  & 43  & 43  & Operador suma \\
+    \texttt{6}  & 54  & 54  & Dígito decimal \\
+    \texttt{=}  & 61  & 61  & Símbolo igual \\
+    \texttt{-}  & 45  & 45  & Operador resta \\
+    \texttt{*}  & 42  & 42  & Operador multiplicación \\
+    \texttt{c}  & 99  & 99  & Comando de borrado \\
+    \texttt{r}  & 114 & 114 & Carácter alfabético \\
+    \texttt{p}  & 112 & 112 & Carácter alfabético \\
+    CR          & 13  & 13  & Retorno de carro \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\subsection{Comportamiento ante el retorno de carro}
+
+La captura muestra varias líneas consecutivas con \texttt{ASCII: 13}, correspondientes
+a múltiples recepciones del código de retorno de carro. Este comportamiento es esperado:
+con \textit{Local line editing} en \textit{Force off}, PuTTY transmite cada byte de
+forma inmediata, por lo que la repetición de tecla del sistema operativo puede generar
+varios bytes idénticos en sucesión. La respuesta del firmware en cada caso es correcta
+e idéntica, confirmando la ausencia de efectos de estado residual entre iteraciones del
+lazo de eco.
+
+\subsection{Resumen de pruebas}
+
+\begin{table}[H]
+  \centering
+  \caption{Resultados de las pruebas de verificación funcional del canal UART.}
+  \begin{tabular}{llp{5.8cm}}
+    \toprule
+    \textbf{Prueba} & \textbf{Estado} & \textbf{Evidencia} \\
+    \midrule
+    TX: impresión de texto en terminal  & \textsc{pass} & Mensaje de bienvenida recibido \\
+    RX: recepción de dígitos            & \textsc{pass} & Códigos 48--57 verificados \\
+    RX: recepción de operadores         & \textsc{pass} & Códigos 42, 43, 45, 61 verificados \\
+    RX: recepción de caracteres alpha   & \textsc{pass} & Códigos 99, 112, 114 verificados \\
+    RX: recepción de retorno de carro   & \textsc{pass} & Código 13, múltiples recepciones \\
+    Gestión de \texttt{rx\_avail}       & \textsc{pass} & Sin doble procesamiento (FIX~3) \\
+    Codificación ISO-8859-1             & \textsc{pass} & Un byte por carácter verificado \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+% ============================================================
+\section{Conclusiones}
+% ============================================================
+
+\begin{enumerate}[leftmargin=*, label=\arabic*.]
+
+  \item \textbf{El canal UART opera correctamente en ambas direcciones.} La
+        correspondencia exacta entre los caracteres enviados y los códigos ASCII
+        reportados por el firmware confirma la integridad del subsistema de comunicación
+        serial, tanto en transmisión como en recepción.
+
+  \item \textbf{La gestión correcta de \texttt{rx\_avail} es un requisito no negociable.}
+        La latencia entre el pulso de confirmación y la bajada efectiva de la bandera
+        obliga a incluir la espera activa del FIX~3. Omitirla produce doble procesamiento
+        silencioso, un defecto que no genera ningún mensaje de error y que puede
+        manifestarse de formas sutiles en firmware de mayor complejidad.
+
+  \item \textbf{Las direcciones de hardware deben resolverse en tiempo de compilación.}
+        La sustitución de punteros globales por macros de preprocesador elimina la
+        dependencia de la inicialización de \texttt{.data}, inexistente en entornos
+        compilados con \texttt{-nostartfiles}. Este principio se aplica a todo firmware
+        adicional sobre este SoC.
+
+  \item \textbf{El programa de eco establece las condiciones operativas para la calculadora.}
+        Los cuatro hallazgos documentados, junto con sus correcciones, definen un
+        conjunto de prácticas de firmware que el desarrollo de la calculadora puede
+        presuponer como validadas. El canal serial queda caracterizado como un componente
+        confiable sobre el cual construir lógica de aplicación de mayor complejidad.
+
+\end{enumerate}
+
+% ============================================================
+\appendix
+\section{Resumen de Correcciones Aplicadas}
+% ============================================================
+
+\begin{table}[H]
+  \centering
+  \caption{Resumen de los cuatro hallazgos documentados durante la verificación.}
+  \begin{tabular}{clp{4cm}p{4.5cm}}
+    \toprule
+    \textbf{FIX} & \textbf{Componente} & \textbf{Problema} & \textbf{Corrección} \\
+    \midrule
+    1 & PuTTY                & UTF-8 genera secuencias multibyte &
+      Cambiar a ISO-8859-1 \\[0.4em]
+    2 & \texttt{main.c}      & Punteros UART en \texttt{.data} sin inicializar &
+      Reemplazar por \texttt{\#define} \\[0.4em]
+    3 & \texttt{main.c}      & Doble lectura por latencia de \texttt{rx\_avail} &
+      Espera activa tras pulso \texttt{rx\_ack} \\[0.4em]
+    4 & \texttt{bram\_hex.v} & BRAM insuficiente para el firmware &
+      Ampliar a 8192 palabras \\
+    \bottomrule
+  \end{tabular}
+\end{table}
+
+\section{Comando de Compilación Utilizado}
+
+\begin{lstlisting}[style=consolestyle,
+  caption={Secuencia de compilación y generación del archivo hex (PowerShell).}]
+riscv-none-elf-gcc -march=rv32i -mabi=ilp32 -Os -nostartfiles ^
+    "-Wl,-Ttext=0x00000000" -o firmware.elf main.c
+
+riscv-none-elf-objcopy -O verilog --verilog-data-width=4 ^
+    firmware.elf firmware.hex
+\end{lstlisting}
+
+\end{document}

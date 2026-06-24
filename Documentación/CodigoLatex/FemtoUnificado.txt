@@ -1,0 +1,1236 @@
+% =============================================================================================================================================
+\documentclass[12pt,a4paper]{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[spanish,es-tabla,es-noshorthands]{babel}
+\usepackage{csquotes}
+\usepackage{lmodern}
+\usepackage{microtype}
+\usepackage[left=3cm, right=2.5cm, top=2.5cm, bottom=2.5cm]{geometry}
+\usepackage{setspace}
+\onehalfspacing
+
+\usepackage{graphicx}
+\usepackage{tikz}
+\usetikzlibrary{shapes.geometric, arrows.meta, positioning, calc,
+                 fit, backgrounds, decorations.pathreplacing, patterns, matrix}
+\usepackage{tcolorbox}
+\usepackage{booktabs}
+\usepackage{multirow}
+\usepackage{array}
+\usepackage{longtable}
+\usepackage{tabularx}
+\usepackage{colortbl}
+
+\usepackage{listings}
+\usepackage{xcolor}
+
+\definecolor{codegreen}{rgb}{0.0,0.5,0.0}
+\definecolor{codegray}{rgb}{0.5,0.5,0.5}
+\definecolor{codepurple}{rgb}{0.58,0.0,0.82}
+\definecolor{codeblue}{rgb}{0.0,0.2,0.6}
+\definecolor{backcolour}{rgb}{0.97,0.97,0.97}
+\definecolor{keywordcolor}{rgb}{0.0,0.0,0.7}
+\definecolor{codered}{RGB}{180,30,30}
+\definecolor{framecolor}{RGB}{200,200,200}
+
+\lstdefinestyle{verilogstyle}{
+    language=Verilog, backgroundcolor=\color{backcolour},
+    commentstyle=\color{codegreen}\itshape, keywordstyle=\color{keywordcolor}\bfseries,
+    numberstyle=\tiny\color{codegray}, stringstyle=\color{codepurple},
+    basicstyle=\ttfamily\footnotesize, breaklines=true, captionpos=b,
+    keepspaces=true, numbers=left, numbersep=8pt, frame=single,
+    rulecolor=\color{gray!40}, xleftmargin=2em, framexleftmargin=1.5em, tabsize=3,
+    morekeywords={module,endmodule,input,output,wire,reg,assign,always,begin,end,
+      if,else,case,endcase,parameter,localparam,posedge,negedge,initial,default,
+      integer,for,forever,wait},
+}
+\lstdefinestyle{cstyle}{
+    language=C, backgroundcolor=\color{backcolour},
+    commentstyle=\color{codegreen}\itshape, keywordstyle=\color{keywordcolor}\bfseries,
+    numberstyle=\tiny\color{codegray}, stringstyle=\color{codered},
+    basicstyle=\ttfamily\footnotesize, breaklines=true, captionpos=b,
+    keepspaces=true, numbers=left, numbersep=8pt, frame=single,
+    rulecolor=\color{gray!40}, xleftmargin=2em, framexleftmargin=1.5em, tabsize=4,
+    morekeywords={volatile,asm,int,char,while,for,return,void},
+}
+\lstdefinestyle{asmstyle}{
+    backgroundcolor=\color{backcolour}, basicstyle=\ttfamily\footnotesize,
+    breaklines=true, captionpos=b, numbers=left, numberstyle=\tiny\color{codegray},
+    numbersep=5pt, frame=single, rulecolor=\color{gray!40},
+    xleftmargin=2em, framexleftmargin=1.5em,
+    keywordstyle=\color{keywordcolor}\bfseries,
+    commentstyle=\color{codegreen}\itshape, morecomment=[l]{\#}, tabsize=3,
+}
+\lstdefinestyle{bashstyle}{
+    language=bash, backgroundcolor=\color{backcolour},
+    basicstyle=\ttfamily\footnotesize, breaklines=true, captionpos=b,
+    frame=single, rulecolor=\color{gray!40}, xleftmargin=2em, framexleftmargin=1.5em,
+    keywordstyle=\color{keywordcolor}\bfseries, commentstyle=\color{codegreen}\itshape,
+}
+\lstdefinestyle{hexstyle}{
+    backgroundcolor=\color{backcolour}, basicstyle=\ttfamily\footnotesize,
+    breaklines=true, captionpos=b, frame=single, rulecolor=\color{gray!40},
+    xleftmargin=2em, framexleftmargin=1.5em,
+}
+\lstdefinestyle{consolestyle}{
+    backgroundcolor=\color{black}, basicstyle=\ttfamily\footnotesize\color{white},
+    breaklines=true, captionpos=b, frame=single, rulecolor=\color{codegray},
+    xleftmargin=10pt, xrightmargin=5pt, numbers=none,
+}
+
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage[colorlinks=true, linkcolor=blue!60!black,
+            citecolor=green!50!black, urlcolor=blue!70!black]{hyperref}
+
+\usepackage{fancyhdr}
+\setlength{\headheight}{15.36pt}
+\addtolength{\topmargin}{-0.86pt}
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small\leftmark}
+\fancyhead[R]{\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+
+\usepackage{float}
+\usepackage{enumitem}
+\usepackage{subcaption}
+\usepackage[font=small,labelfont=bf]{caption}
+\usepackage{titlesec}
+
+% ─── Formato de secciones SIN salto de página ───
+% \part → título grande con regla, sin página nueva
+\makeatletter
+\renewcommand\part{%
+  \@afterindentfalse
+  \secdef\@part\@spart}
+\renewcommand\@part[2][]{%
+  \addcontentsline{toc}{part}{#2}%
+  \markboth{}{}%
+  \vspace{2cm}%
+  {\centering\rule{\textwidth}{1.2pt}\\[0.5cm]
+   {\Huge\bfseries #2}\\[0.3cm]
+   \rule{\textwidth}{1.2pt}\\[1cm]}%
+  \@afterheading}
+\renewcommand\@spart[1]{%
+  \vspace{2cm}%
+  {\centering\rule{\textwidth}{1.2pt}\\[0.5cm]
+   {\Huge\bfseries #1}\\[0.3cm]
+   \rule{\textwidth}{1.2pt}\\[1cm]}%
+  \@afterheading}
+\makeatother
+
+% Secciones: equivalentes a capítulos
+\titleformat{\section}{\Large\bfseries}{\thesection}{1em}{}
+\titlespacing*{\section}{0pt}{1.5em}{0.8em}
+\titleformat{\subsection}{\large\bfseries}{\thesubsection}{1em}{}
+\titleformat{\subsubsection}{\normalsize\bfseries}{\thesubsubsection}{1em}{}
+
+% Profundidad del TOC
+\setcounter{tocdepth}{3}
+\setcounter{secnumdepth}{3}
+
+% ─── TikZ global ───
+\tikzset{
+    block/.style={rectangle, draw, fill=blue!8, text width=3.2cm,
+        text centered, minimum height=1.2cm, rounded corners=3pt, font=\small},
+    bigblock/.style={rectangle, draw, fill=blue!5, minimum width=4cm,
+        minimum height=1.5cm, text centered, rounded corners=3pt, font=\small\bfseries},
+    arrow/.style={-Stealth, thick},
+    doublearrow/.style={Stealth-Stealth, thick},
+    bus/.style={-Stealth, very thick, draw=blue!60},
+    signal/.style={-Stealth, thick, draw=red!60, dashed},
+    flowblock/.style={rectangle, draw, fill=blue!10, text width=3.5cm,
+        text centered, minimum height=0.8cm, rounded corners=2pt, font=\small},
+    decision/.style={diamond, draw, fill=yellow!15, text width=2.5cm,
+        text centered, aspect=2.5, font=\small, inner sep=1pt},
+    startstop/.style={rectangle, draw, fill=red!10, rounded corners=8pt,
+        text width=3cm, text centered, minimum height=0.7cm, font=\small},
+}
+
+
+% =====================================================================
+\begin{document}
+% =====================================================================
+
+% ─── PORTADA ─────────────────────────────────────────────────────────
+\begin{titlepage}
+\centering
+\vspace*{1cm}
+{\Large\bfseries UNIVERSIDAD NACIONAL DE COLOMBIA}\\[0.3cm]
+{\large Sede Manizales}\\[0.2cm]
+{\large Facultad de Ingeniería y Arquitectura}\\[0.2cm]
+{\large Departamento de Ingeniería Eléctrica, Electrónica y Computación}\\[2cm]
+
+\rule{\textwidth}{1.5pt}\\[0.4cm]
+{\Huge\bfseries FEMTO UN}\\[0.3cm]
+{\LARGE Implementación de un Procesador Softcore\\ RISC-V FemtoRV32 sobre FPGA\\
+Tang Primer 20K \\[0.2cm]
+\large Diseño, Verificación y Aplicación}\\[0.2cm]
+\rule{\textwidth}{1.5pt}\\[1cm]
+{\Large\bfseries Proyecto de Grado}\\[1cm]
+{\large Presentado por:}\\[0.3cm]
+{\Large Laura Daniela Alarcón Castaño \\
+Sebastián Orozco Agudelo}\\[0.5cm]
+{\large Director:}\\[0.3cm]
+{\Large Juan Bernardo Gómez Mendoza}\\[2cm]
+{\large Manizales, Colombia}\\[0.2cm]
+{\large 2026}
+\end{titlepage}
+
+\tableofcontents
+\newpage
+
+
+% #####################################################################
+\part{Plataforma Base --- SoC RISC-V con UART}
+\label{part:diseno}
+% #####################################################################
+
+Esta parte describe la arquitectura del SoC Femto\_Un y sus componentes de hardware: el procesador FemtoRV32, la memoria BRAM, el periférico UART y la infraestructura de comunicación serial. El diseño aquí documentado constituye la \textbf{plataforma base} sobre la cual se construyen los tres proyectos posteriores (eco ASCII, sumadora y bootloader), que reutilizan íntegramente estos módulos.
+
+\section{Introducción}
+\label{sec:introduccion}
+
+\subsection{Descripción del Proyecto}
+
+El proyecto \textbf{Femto\_Un} consiste en la implementación de un sistema en chip (\textit{System on Chip}, SoC) basado en el procesador softcore de arquitectura RISC-V denominado FemtoRV32, variante \textit{Quark}. Dicho sistema se sintetiza e implementa sobre una FPGA \textit{Tang Primer 20K} de Sipeed, equipada con el chip Gowin GW2A-LV18PG256C8/I7. El SoC integra un procesador RISC-V con soporte para el conjunto de instrucciones RV32I, una memoria de programa y datos tipo \textit{Block RAM} (BRAM) de 32\,KiB inicializada con firmware en formato hexadecimal, y un periférico de comunicación serial UART configurable a 120\,000 baudios.
+
+El desarrollo se organiza en tres etapas progresivas: la primera establece la arquitectura del SoC y la verifica mediante simulación funcional con Icarus Verilog y GTKWave; la segunda valida el canal de comunicación UART en hardware real mediante un programa de eco ASCII; la tercera construye una aplicación de calculadora básica (sumadora) sobre el canal verificado.
+
+\subsection{Objetivos}
+
+\subsubsection{Objetivo General}
+
+Diseñar, implementar, verificar y validar un sistema en chip basado en el procesador softcore RISC-V FemtoRV32 sobre la FPGA Tang Primer 20K, integrando un periférico UART para comunicación serial, y demostrar su funcionalidad mediante aplicaciones embebidas progresivamente más complejas.
+
+\subsubsection{Objetivos Específicos}
+
+\begin{enumerate}[label=\arabic*., leftmargin=2cm]
+    \item Implementar el núcleo FemtoRV32 Quark con soporte completo para el ISA base RV32I.
+    \item Integrar una memoria BRAM de 32\,KiB con escritura granular por bytes.
+    \item Diseñar un periférico UART mapeado en memoria a 120\,000 baudios.
+    \item Verificar el diseño mediante simulación con Icarus Verilog y GTKWave.
+    \item Validar el canal UART bidireccional mediante un programa de eco ASCII en hardware.
+    \item Implementar una calculadora básica que demuestre ejecución de lógica de aplicación.
+    \item Documentar los hallazgos de depuración como guía para desarrollo futuro.
+\end{enumerate}
+
+\subsection{Justificación}
+
+La arquitectura RISC-V constituye un estándar abierto y libre de regalías que permite a investigadores y estudiantes estudiar, modificar y distribuir implementaciones sin restricciones. Su modularidad (conjunto base RV32I con 47 instrucciones, extensible con M, C, F, etc.), la regularidad de sus formatos de instrucción y la disponibilidad de herramientas (GCC, LLVM, simuladores) la convierten en una plataforma pedagógica de primer orden. La FPGA Tang Primer 20K, con 20\,736 LUTs, 15\,552 registros y 41\,472 bits de BRAM, ofrece recursos suficientes para un SoC completo a costo accesible, permitiendo experimentar con el \textit{hardware-software co-design} de forma integral.
+
+
+\section{Arquitectura General del SoC}
+\label{sec:arquitectura}
+
+\subsection{Diagrama de Bloques}
+
+El sistema Femto\_Un se organiza como un SoC con arquitectura de bus compartido. Un único maestro de bus (la CPU FemtoRV32) accede a múltiples esclavos (BRAM y periférico UART) mediante decodificación de direcciones. La Figura~\ref{fig:diagrama_bloques} presenta el diagrama de bloques del sistema.
+
+\begin{figure}
+    \centering
+    \includegraphics[width=0.8\linewidth]{image.png}
+    \caption{Diagrama de bloques del SoC Femto. La CPU genera direcciones hacia el multiplexor de decodificación, que activa bram\_cs o uart\_cs según el rango. Los datos de lectura retornan por mem\_rdata y los de escritura viajan por mem\_wdata.}
+    \label{fig:placeholder}
+\end{figure}
+\section{Flujo de Datos --- Máquina de Estados}
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[node distance=2cm, >=Stealth, every node/.style={font=\small}]
+    \node[startstop] (reset) {RESET};
+    \node[flowblock, below=1.2cm of reset] (fetch)
+        {\textbf{FETCH\_INSTR}\\ PC $\rightarrow$ mem\_addr\\ mem\_rstrb $= 1$};
+    \node[flowblock, below=1.2cm of fetch] (wait)
+        {\textbf{WAIT\_INSTR}\\ Leer mem\_rdata\\ Decodificar instr\\ Cargar rs1, rs2};
+    \node[flowblock, below=1.2cm of wait] (exec)
+        {\textbf{EXECUTE}\\ ALU opera\\ Actualizar PC\\ Store/Load};
+    \node[decision, below=1.4cm of exec] (need) {¿Esperar\\ memoria\\ o ALU?};
+    \node[flowblock, right=2.5cm of need] (waitalu)
+        {\textbf{WAIT\_ALU\_OR\_MEM}\\ Esperar aluBusy,\\ mem\_rbusy,\\ mem\_wbusy};
+    \draw[arrow] (reset) -- (fetch);
+    \draw[arrow] (fetch) -- (wait);
+    \draw[arrow] (wait) -- (exec);
+    \draw[arrow] (exec) -- (need);
+    \draw[arrow] (need) -- node[left]{No} ++(-3,0) |- (fetch);
+    \draw[arrow] (need) -- node[above]{Sí} (waitalu);
+    \draw[arrow] (waitalu) |- (fetch);
+\end{tikzpicture}
+\caption{Máquina de estados del procesador FemtoRV32.}
+\label{fig:flujo_datos}
+\end{figure}
+\subsection{Bus de Memoria}
+
+La comunicación entre la CPU y los periféricos utiliza las siguientes señales:
+
+\begin{table}[H]
+\centering
+\caption{Señales del bus de memoria del SoC.}
+\begin{tabular}{l c p{8cm}}
+\toprule
+\textbf{Señal} & \textbf{Ancho} & \textbf{Descripción} \\
+\midrule
+\texttt{mem\_addr}  & 32 bits & Dirección generada por la CPU. \\
+\texttt{mem\_wdata} & 32 bits & Datos de escritura (CPU $\rightarrow$ periférico). \\
+\texttt{mem\_rdata} & 32 bits & Datos de lectura (periférico $\rightarrow$ CPU). \\
+\texttt{mem\_wmask} & 4 bits  & Máscara de escritura por bytes. \\
+\texttt{mem\_rstrb} & 1 bit   & Strobe de lectura activa. \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+La decodificación de direcciones compara \texttt{mem\_addr[31:16]}: si es \texttt{16'h0040} se activa \texttt{uart\_cs}; en caso contrario, \texttt{bram\_cs}. Esto crea dos regiones: BRAM en \texttt{0x00000000}--\texttt{0x00007FFF} y UART en \texttt{0x00400000}--\texttt{0x0040FFFF}.
+
+\begin{lstlisting}[style=verilogstyle, caption={Decodificación de direcciones y multiplexor de lectura.}]
+wire uart_cs = (mem_addr[31:16] == 16'h0040);
+wire bram_cs = ~uart_cs;
+assign mem_rdata = uart_cs ? uart_rdata : bram_rdata;
+\end{lstlisting}
+
+
+\section{Descripción Detallada de Hardware}
+\label{sec:hardware}
+
+\subsection{Módulo \texttt{top\_tang\_bram} --- Nivel Superior}
+
+Actúa como interfaz entre los pines físicos de la FPGA y el SoC. Su responsabilidad principal es generar un reset estable mediante un contador de 20 bits. Tras $2^{20} = 1\,048\,576$ ciclos ($\approx 38.8$\,ms a 27\,MHz), la señal \texttt{resetn} se activa y la CPU comienza a ejecutar. El LED refleja el estado de \texttt{resetn}: apagado durante el reset, encendido cuando el sistema está operativo.
+
+\begin{lstlisting}[style=verilogstyle, caption={Generador de reset del nivel superior.}]
+reg [19:0] reset_cnt = 0;
+wire resetn = &reset_cnt;   // AND-reduction: 1 cuando todos los bits son 1
+always @(posedge clk_27mhz) begin
+    if (!rst_n) reset_cnt <= 0;           // Reset externo: reiniciar
+    else if (!resetn) reset_cnt <= reset_cnt + 1;  // Incrementar
+end
+assign led = resetn;
+\end{lstlisting}
+
+\subsection{Módulo \texttt{SOC\_bram} --- Integración del Sistema}
+
+Conecta el procesador FemtoRV32 con la BRAM y el periférico UART. Define las señales derivadas del bus (\texttt{wr = |mem\_wmask}, \texttt{rd = mem\_rstrb}) y propaga el reloj, el reset y las líneas seriales. Las señales \texttt{mem\_rbusy} y \texttt{mem\_wbusy} se fijan en \texttt{1'b0} porque tanto la BRAM como el UART responden en un solo ciclo de reloj.
+
+\subsection{Módulo \texttt{bram\_hex} --- Memoria de Programa y Datos}
+
+Memoria síncrona de 8192 palabras de 32 bits (32\,KiB), inicializable desde archivo hexadecimal con \texttt{\$readmemh}. Soporta escritura granular por bytes mediante la máscara \texttt{mem\_wmask[3:0]}, habilitando las instrucciones \texttt{SB} (store byte), \texttt{SH} (store halfword) y \texttt{SW} (store word) del ISA RISC-V. La dirección de byte se convierte a dirección de palabra descartando los dos bits inferiores: \texttt{word\_addr = mem\_addr[31:2]}.
+
+\begin{lstlisting}[style=verilogstyle, caption={Lógica de lectura/escritura de la BRAM con máscara por bytes.}]
+reg [31:0] MEM [0:8191];
+wire [29:0] word_addr = mem_addr[31:2];
+
+initial $readmemh("src/firmware.hex", MEM);
+
+always @(posedge clk) begin
+    if (cs & rd) mem_rdata <= MEM[word_addr[12:0]];
+    if (cs & wr) begin
+        if (mem_wmask[0]) MEM[word_addr[12:0]][ 7: 0] <= mem_wdata[ 7: 0];
+        if (mem_wmask[1]) MEM[word_addr[12:0]][15: 8] <= mem_wdata[15: 8];
+        if (mem_wmask[2]) MEM[word_addr[12:0]][23:16] <= mem_wdata[23:16];
+        if (mem_wmask[3]) MEM[word_addr[12:0]][31:24] <= mem_wdata[31:24];
+    end
+end
+\end{lstlisting}
+
+\section{Módulo \texttt{FemtoRV32} --- Procesador RISC-V}
+
+Implementación minimalista del ISA RV32I (Bruno Levy y Matthias Koch). Soporta las 47 instrucciones base más \texttt{RDCYCLES}. Opera con máquina de estados \textit{one-hot} de 4 fases (3--5 ciclos por instrucción). La ALU realiza operaciones combinacionales (suma, resta, comparaciones, lógica) y secuenciales (desplazamientos bit a bit). El archivo de registros (32$\times$32 bits) se escribe en el flanco negativo del reloj para evitar conflictos.
+
+\begin{table}[H]
+\centering
+\caption{Instrucciones RV32I decodificadas por FemtoRV32.}
+\label{tab:instrucciones}
+\begin{tabular}{l l l p{5cm}}
+\toprule
+\textbf{Señal} & \textbf{Opcode[6:2]} & \textbf{Tipo} & \textbf{Operación} \\
+\midrule
+\texttt{isLoad}   & \texttt{00000} & I & \texttt{rd $\leftarrow$ mem[rs1+Iimm]} \\
+\texttt{isALUimm} & \texttt{00100} & I & \texttt{rd $\leftarrow$ rs1 OP Iimm} \\
+\texttt{isStore}  & \texttt{01000} & S & \texttt{mem[rs1+Simm] $\leftarrow$ rs2} \\
+\texttt{isALUreg} & \texttt{01100} & R & \texttt{rd $\leftarrow$ rs1 OP rs2} \\
+\texttt{isLUI}    & \texttt{01101} & U & \texttt{rd $\leftarrow$ Uimm} \\
+\texttt{isAUIPC}  & \texttt{00101} & U & \texttt{rd $\leftarrow$ PC + Uimm} \\
+\texttt{isBranch} & \texttt{11000} & B & \texttt{if(cond) PC $\leftarrow$ PC+Bimm} \\
+\texttt{isJALR}   & \texttt{11001} & I & \texttt{rd $\leftarrow$ PC+4; PC $\leftarrow$ rs1+Iimm} \\
+\texttt{isJAL}    & \texttt{11011} & J & \texttt{rd $\leftarrow$ PC+4; PC $\leftarrow$ PC+Jimm} \\
+\texttt{isSYSTEM} & \texttt{11100} & I & \texttt{rd $\leftarrow$ cycles} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+
+\section{Mapa de Memoria}
+\label{sec:mapa_memoria}
+
+\begin{table}[H]
+\centering
+\caption{Mapa de memoria del SoC Femto\_Un.}
+\label{tab:mapa_memoria}
+\begin{tabular}{l l l l p{4.5cm}}
+\toprule
+\textbf{Inicio} & \textbf{Fin} & \textbf{Tamaño} & \textbf{Periférico} & \textbf{Descripción} \\
+\midrule
+\texttt{0x00000000} & \texttt{0x00007FFF} & 32\,KB & BRAM & Memoria de programa y datos. \\
+\texttt{0x00400008} & \texttt{0x0040000B} & 4\,B & UART\_DATA & Registro de datos TX/RX. \\
+\texttt{0x00400010} & \texttt{0x00400013} & 4\,B & UART\_CTRL & Registro de control y estado. \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+La secuencia para transmitir un byte consiste en: (1) verificar \texttt{tx\_busy}=0, (2) escribir el byte en \texttt{UART\_DATA}, (3) escribir 1 en \texttt{UART\_CTRL} para activar \texttt{tx\_wr}, (4) escribir 0 para desactivarlo. La recepción requiere: (1) esperar \texttt{rx\_avail}=1, (2) leer \texttt{UART\_DATA}, (3) pulsar \texttt{rx\_ack}, (4) esperar \texttt{rx\_avail}=0.
+
+
+\section{Comunicación UART}
+\label{sec:uart_comm}
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[>=Stealth, scale=0.85, transform shape]
+    \def\bitw{1.2}
+    \def\bith{1.0}
+    \draw[thick] (-1.5, \bith) -- (0, \bith);
+    \node[above, font=\footnotesize] at (-0.75, \bith) {Idle};
+    \draw[thick] (0, \bith) -- (0, 0);
+    \draw[thick, fill=red!20] (0, 0) rectangle (\bitw, \bith);
+    \node[font=\small] at (\bitw/2, \bith/2) {Start};
+    \foreach \i in {0,...,7} {
+        \pgfmathsetmacro{\x}{\bitw + \i*\bitw}
+        \draw[thick, fill=blue!15] (\x, 0) rectangle (\x+\bitw, \bith);
+        \node[font=\small] at (\x+\bitw/2, \bith/2) {D\i};
+    }
+    \pgfmathsetmacro{\stopx}{\bitw + 8*\bitw}
+    \draw[thick, fill=green!20] (\stopx, 0) rectangle (\stopx+\bitw, \bith);
+    \node[font=\small] at (\stopx+\bitw/2, \bith/2) {Stop};
+    \draw[thick] (\stopx+\bitw, \bith) -- (\stopx+\bitw+1.5, \bith);
+    \draw[Stealth-Stealth] (0, -0.7) -- (\stopx+\bitw, -0.7);
+    \node[below, font=\footnotesize] at (5.4, -0.7) {10 bits $\times$ $T_{bit}$};
+\end{tikzpicture}
+\caption{Estructura de trama UART: 1 start, 8 datos (LSB primero), 1 stop.}
+\label{fig:uart_frame}
+\end{figure}
+
+\begin{table}[H]
+\centering
+\caption{Parámetros del sistema.}
+\label{tab:parametros}
+\begin{tabular}{l l}
+\toprule
+\textbf{Parámetro} & \textbf{Valor} \\
+\midrule
+FPGA & Tang Primer 20K --- GW2A-LV18PG256C8/I7 \\
+Frecuencia de reloj & 27\,MHz \\
+Baud rate UART & 120\,000\,bps (real: 120\,535.7, error 0.45\%) \\
+Configuración serial & 8N1 \\
+Duración de trama & $\approx 83.3\,\mu$s (2250 ciclos) \\
+Memoria BRAM & 8192 palabras de 32 bits (32\,KiB) \\
+Compilador & xpack-riscv-none-elf-gcc 15.2.0 \\
+Flags & \texttt{-march=rv32i -mabi=ilp32 -Os -nostartfiles} \\
+Terminal & PuTTY --- 120000 baud, ISO-8859-1 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+
+\section{Implementación en FPGA}
+\label{sec:fpga}
+
+\begin{table}[H]
+\centering
+\caption{Asignación de pines del SoC Femto\_Un.}
+\begin{tabular}{l l l l l}
+\toprule
+\textbf{Señal} & \textbf{Pin} & \textbf{I/O} & \textbf{Pull} & \textbf{Drive} \\
+\midrule
+\texttt{clk\_27mhz} & H11 & LVCMOS33 & Ninguno & --- \\
+\texttt{rst\_n}      & E8  & LVCMOS33 & Pull-Up & --- \\
+\texttt{uart\_tx}    & M11 & LVCMOS33 & Ninguno & 8\,mA \\
+\texttt{uart\_rx}    & T13 & LVCMOS33 & Pull-Up & --- \\
+\texttt{led}         & L16 & LVCMOS33 & Ninguno & 8\,mA \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+El flujo de implementación sigue las etapas: creación del proyecto en Gowin IDE, síntesis RTL (donde se infieren los bloques BRAM), Place \& Route con restricciones de pines, generación del bitstream (\texttt{.fs}) y programación mediante el programador USB integrado.
+
+
+% #####################################################################
+\part{Proyecto 1 --- Verificación UART }
+\label{part:eco}
+% #####################################################################
+
+Con la plataforma base descrita en la Parte~\ref{part:diseno} verificada en simulación, este proyecto valida el canal de comunicación UART en hardware real. El firmware, el mapa de memoria y los módulos Verilog son exactamente los documentados en las secciones anteriores; aquí se añade únicamente el programa en C que ejerce el periférico.
+
+\section{Contexto y Objetivo}
+
+Confirmado el funcionamiento del SoC en simulación, el siguiente paso crítico es validar la cadena completa de comunicación en hardware real. El programa de eco ASCII recibe cada byte desde la terminal PuTTY y lo devuelve acompañado de su código ASCII decimal.
+
+\section{Diseño del Firmware de Eco}
+
+Los registros del periférico se acceden mediante macros \texttt{\#define} (nunca variables globales --- véase FIX~E2). La transmisión requiere verificar \texttt{tx\_busy}, escribir el dato y generar un pulso en \texttt{tx\_wr}. La recepción requiere esperar \texttt{rx\_avail}, leer el dato, pulsar \texttt{rx\_ack} y esperar que \texttt{rx\_avail} baje (FIX~E3). La conversión a decimal usa restas sucesivas porque RV32I no tiene división por hardware.
+
+\begin{lstlisting}[style=cstyle, caption={Funciones de transmisión y recepción del eco ASCII.}]
+void enviar_byte(char c) {
+    while (*uart_ctrl & (1 << 9));  // esperar tx_busy = 0
+    *uart_data = (int)c;
+    *uart_ctrl = 1;                 // tx_wr = 1
+    *uart_ctrl = 0;                 // tx_wr = 0
+}
+char recibir_byte(void) {
+    while (!(*uart_ctrl & (1 << 8)));   // esperar rx_avail = 1
+    char t = (char)(*uart_data & 0xFF);
+    *uart_ctrl = 2;                     // rx_ack = 1
+    *uart_ctrl = 0;                     // rx_ack = 0
+    while (*uart_ctrl & (1 << 8));      // esperar rx_avail = 0
+    return t;
+}
+\end{lstlisting}
+
+\section{Hallazgos Durante la Depuración}
+
+\subsection{FIX E1 --- Codificación UTF-8 en la terminal}
+
+\textbf{Síntoma:} Caracteres fuera del rango ASCII generaban secuencias multibyte. \textbf{Causa:} PuTTY en UTF-8 codifica caracteres no-ASCII como secuencias de 2--4 bytes; el UART los trata como bytes independientes. \textbf{Corrección:} Configurar PuTTY con codificación ISO-8859-1 (Latin-1), donde cada carácter ocupa exactamente un byte.
+
+\subsection{FIX E2 --- Punteros UART como variables globales}
+
+\textbf{Síntoma:} Sin salida en terminal; accesos a BRAM en lugar de \texttt{0x0040xxxx}. \textbf{Causa:} Con \texttt{-nostartfiles} la sección \texttt{.data} nunca se copia a RAM; las variables globales inicializadas contienen basura. \textbf{Corrección:} Usar \texttt{\#define uart\_data ((volatile int *)0x00400008)}, que embebe las direcciones como constantes en las instrucciones sin generar variables en \texttt{.data}.
+
+\subsection{FIX E3 --- Doble procesamiento del mismo byte}
+
+\textbf{Síntoma:} Cada tecla se imprimía dos veces. \textbf{Causa:} \texttt{rx\_avail} no baja en el mismo ciclo que \texttt{rx\_ack}; si el firmware evalúa la bandera antes de que expire la latencia, la encuentra activa y procesa el mismo byte otra vez. \textbf{Corrección:} Agregar \texttt{while (*uart\_ctrl \& (1 << 8));} tras el pulso.
+
+\subsection{FIX E4 --- BRAM insuficiente}
+
+\textbf{Síntoma:} Síntesis exitosa pero sistema sin respuesta. \textbf{Causa:} Firmware más grande que los 256 palabras originales; el sintetizador trunca silenciosamente. \textbf{Corrección:} Ampliar a 8192 palabras (32\,KiB).
+
+\section{Resultados del Eco ASCII}
+
+\begin{table}[H]
+\centering
+\caption{Verificación de correspondencia carácter--código ASCII en hardware.}
+\begin{tabular}{c c c l c c c l}
+\toprule
+\textbf{Car.} & \textbf{Esp.} & \textbf{Rec.} & \textbf{Cat.} &
+\textbf{Car.} & \textbf{Esp.} & \textbf{Rec.} & \textbf{Cat.} \\
+\midrule
+\texttt{9} & 57 & 57 & Dígito  & \texttt{*} & 42 & 42 & Operador \\
+\texttt{+} & 43 & 43 & Operador & \texttt{c} & 99 & 99 & Alfa \\
+\texttt{6} & 54 & 54 & Dígito  & \texttt{r} & 114 & 114 & Alfa \\
+\texttt{=} & 61 & 61 & Símbolo & CR & 13 & 13 & Control \\
+\texttt{-} & 45 & 45 & Operador & \texttt{p} & 112 & 112 & Alfa \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+La correspondencia exacta en todos los casos confirma la integridad bidireccional del canal UART. El subsistema queda validado para construir aplicaciones más complejas.
+
+
+% #####################################################################
+\newpage
+\part{Proyecto 2 --- Calculadora Básica (Sumadora)}
+\label{part:sumadora}
+% #####################################################################
+
+Este proyecto reutiliza la misma plataforma base (SoC, BRAM de 32\,KiB, periférico UART a 120\,000 baudios) y construye sobre el canal UART validado en el Proyecto~1. El único cambio respecto al hardware es el firmware cargado en la BRAM.
+
+\section{Contexto}
+
+Con el canal UART validado, esta etapa construye lógica de aplicación: una calculadora que solicita dos operandos y un operador por terminal, ejecuta la operación y devuelve el resultado. Este proyecto cubre la operación de suma.
+
+\section{Diseño del Firmware}
+
+\subsection{Acumulación de Dígitos sin Multiplicación}
+
+El ISA base RV32I no incluye multiplicación por hardware. El operador \texttt{*} genera llamadas a \texttt{\_\_mulsi3}, no disponible con \texttt{-nostartfiles}. La acumulación se implementa con desplazamientos: \texttt{num = (num << 3) + (num << 1) + digito}, algebraicamente equivalente a \texttt{num = num*10 + digito}.
+
+\subsection{Impresión sin División}
+
+Análogamente, \texttt{/} y \texttt{\%} generan llamadas a \texttt{\_\_divsi3}/\texttt{\_\_modsi3}. La conversión a decimal usa restas sucesivas por potencia de diez, cubriendo hasta $10^9$.
+
+\subsection{Lazo Principal}
+
+El firmware implementa tres fases secuenciales: (1) captura del primer operando dígito a dígito hasta Enter, (2) espera del operador \texttt{+}, (3) captura del segundo operando. Tras completarlas, calcula la suma, imprime el resultado y reinicia el lazo.
+
+\begin{lstlisting}[style=cstyle, caption={Lazo principal de la sumadora (fragmento).}]
+while (1) {
+    int num1 = 0, num2 = 0;
+    imprimir_str("\r\n=== SUMADORA BASICA ===\r\n");
+    imprimir_str("Numero 1 y Enter: ");
+    while (1) {
+        char t = leer_char();
+        if (t >= '0' && t <= '9') {
+            num1 = (num1 << 3) + (num1 << 1) + (t - '0');
+            enviar_char(t);  // eco del digito
+        } else if (t == '\r' || t == '\n') break;
+    }
+    imprimir_str("\r\nResultado: ");
+    imprimir_numero(num1 + num2);
+}
+\end{lstlisting}
+
+\section{Hallazgos Durante la Depuración}
+
+\subsection{FIX S1 --- Retardo por software insuficiente}
+
+\textbf{Síntoma:} Con dos dígitos, el carácter se duplicaba. \textbf{Causa:} Un \texttt{for} de 50\,000 iteraciones como retardo era reducido por \texttt{-Os}; el firmware procesaba el byte antes de que \texttt{rx\_avail} bajara. \textbf{Corrección:} Espera activa sobre la bandera, como en el eco ASCII.
+
+\subsection{FIX S2 --- Diagnóstico de la función de lectura}
+
+Se probaron tres variantes de \texttt{leer\_char} con un programa de diagnóstico. Las tres produjeron exactamente un byte por tecla con entrada controlada, confirmando que la lectura individual era correcta y el problema residía en el estado del stack.
+
+\subsection{FIX S3 --- Inicialización tardía del Stack Pointer}
+
+\textbf{Síntoma:} Resultados incorrectos con operandos de dos dígitos (error proporcional). \textbf{Causa:} \texttt{asm volatile("li sp, ...")} dentro de \texttt{main} ejecutaba después del prólogo del compilador, que usaba el stack con SP no inicializado. \textbf{Corrección:} Archivo \texttt{start.S} que inicializa SP antes de saltar a \texttt{main}:
+
+\begin{lstlisting}[style=asmstyle, caption={Archivo \texttt{start.S} --- inicialización previa a \texttt{main}.}]
+.section .text
+.global _inicio
+_inicio:
+    li sp, 0x00007FF0   # stack al final de la BRAM
+    j main              # transferir control
+loop:
+    j loop              # atrapar retorno inesperado
+\end{lstlisting}
+
+\subsection{Problema Abierto --- Error sistemático con operandos multidígito}
+
+Tras las correcciones, operandos de un dígito producen resultados correctos; con dos o más dígitos se observa un error de $-7$ por dígito adicional (e.g., $10+1=4$ en lugar de $11$). La hipótesis principal es que \texttt{\_inicio} queda ubicado fuera de \texttt{0x00000000} al compilar con \texttt{-nostdlib -lgcc}, causando ejecución incorrecta al arranque. La solución recomendada es un linker script explícito.
+
+\section{Resultados de la Sumadora}
+
+\begin{table}[H]
+\centering
+\caption{Resultados experimentales de la sumadora.}
+\begin{tabular}{c c c c l}
+\toprule
+\textbf{Num1} & \textbf{Num2} & \textbf{Esperado} & \textbf{Obtenido} & \textbf{Estado} \\
+\midrule
+2  & 2 & 4  & 4  & Correcto \\
+9  & 1 & 10 & 10 & Correcto \\
+4  & 6 & 10 & 10 & Correcto \\
+10 & 1 & 11 & 4  & Error ($-7$) \\
+10 & 2 & 12 & 5  & Error ($-7$) \\
+20 & 1 & 21 & 7  & Error ($-14$) \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+
+% #####################################################################
+\newpage
+\part{Proyecto 3 --- FemtoUN Boot (Bootloader con SPI SD y PSRAM)}
+\label{part:boot}
+% #####################################################################
+
+Este proyecto extiende la plataforma base con dos periféricos nuevos (SPI y adaptador PSRAM) y reemplaza el firmware de BRAM por un bootloader. El procesador FemtoRV32, el núcleo UART y la estructura de bus documentados en la Parte~\ref{part:diseno} se conservan sin modificaciones; los cambios se limitan al integrador \texttt{SOC\_boot.v}, el módulo top-level y el firmware.
+
+\section{Contexto y Motivación}
+
+Las tres etapas anteriores del proyecto demostraron el funcionamiento del SoC Femto\_Un con un programa almacenado exclusivamente en BRAM interna. Sin embargo, la capacidad de 32\,KiB de BRAM impone una limitación severa para aplicaciones de mayor complejidad. Esta cuarta etapa expande el sistema con dos periféricos adicionales: un controlador SPI para lectura de tarjetas MicroSD y un adaptador de bus para la memoria PSRAM HyperRAM integrada en la Tang Primer 20K (8\,MB). El resultado es un \textbf{bootloader} que arranca desde la BRAM, lee un programa de usuario desde la tarjeta SD vía SPI, lo copia a la PSRAM y transfiere el control de ejecución a esa memoria externa, multiplicando por 256 la capacidad de programa disponible.
+
+\section{Arquitectura Expandida}
+\label{sec:boot_arch}
+
+\subsection{Diagrama de Bloques}
+
+\usetikzlibrary{fit, arrows.meta} 
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[
+    >=Stealth, font=\small,
+    every node/.style={align=center},
+]
+
+\tikzset{
+  block/.style={draw, thick, rounded corners=3pt,
+                minimum width=2.6cm, minimum height=1.3cm, text width=2.3cm},
+  extblock/.style={draw, thick, rounded corners=4pt,
+                    minimum width=2.2cm, minimum height=1.3cm, text width=2cm},
+  bus/.style={thick, <->},
+}
+
+% ---- CPU (fuera del SoC) ----
+\node[block, fill=red!8, minimum height=2.4cm] (cpu) at (0,0)
+    {\textbf{FemtoRV32}\\[1pt]\textbf{Quark}\\[3pt]\footnotesize ADDR\_WIDTH=32};
+
+% ---- Bloques internos del SoC ----
+\node[block, fill=orange!10] (bram) at (4.4,4.2)
+    {\textbf{BRAM}\\[1pt]4\,KB\\(bootloader)};
+\node[block, fill=purple!10] (uart) at (4.4,1.6)
+    {\textbf{UART}\\[1pt]115\,200 baud};
+\node[block, fill=green!10] (spi) at (4.4,-1.0)
+    {\textbf{SPI Master}\\[1pt]Modo 0};
+\node[block, fill=cyan!10] (psram) at (4.4,-3.6)
+    {\textbf{PSRAM Bus}\\[1pt]Adaptador};
+
+% ---- Recuadro punteado del SoC ----
+\node[draw, dashed, thick, rounded corners=6pt,
+      fit=(bram)(uart)(spi)(psram), inner sep=14pt,
+      label={[font=\bfseries]above:SOC\_boot.v}] (soc) {};
+
+% ---- Periféricos externos ----
+\node[extblock, fill=yellow!15] (pll) at (9.6,4.2)
+    {\textbf{rPLL}\\[1pt]27$\rightarrow$108\,MHz};
+\node[extblock, fill=purple!20] (term) at (9.6,1.6) {\textbf{Terminal}};
+\node[extblock, fill=green!20]  (sd)   at (9.6,-1.0) {\textbf{MicroSD}};
+\node[extblock, fill=cyan!20]   (hyper) at (9.6,-3.6)
+    {\textbf{HyperRAM}\\[1pt]8\,MB};
+
+% ---- Bus interno de 32 bits (CPU -> BRAM/UART/SPI/PSRAM) ----
+\draw[bus] (cpu.east) -- (1.9,0) node[above, midway, font=\tiny]{Bus 32 bits};
+\draw[thick] (1.9,4.2) -- (1.9,-3.6); % tronco del bus
+\draw[bus] (1.9,4.2)  -- (bram.west);
+\draw[bus] (1.9,1.6)  -- (uart.west);
+\draw[bus] (1.9,-1.0) -- (spi.west);
+\draw[bus] (1.9,-3.6) -- (psram.west);
+
+% ---- Señales rbusy / wbusy (PSRAM -> CPU), por debajo de todo ----
+\draw[densely dashed, thick, blue!40, ->]
+    (psram.south) -- ++(0,-0.55)
+    node[below, font=\tiny]{rbusy / wbusy} -| (cpu.south);
+
+% ---- UART <-> Terminal ----
+\draw[<->, thick, purple!50] (uart.east) --
+    node[above, font=\tiny]{TX/RX} (term.west);
+
+% ---- SPI -> MicroSD ----
+\draw[->, thick, green!50!black] (spi.east) --
+    node[above, font=\tiny]{SCK, MOSI, MISO, CS} (sd.west);
+
+% ---- PSRAM <-> HyperRAM ----
+\draw[<->, thick, cyan!60] (psram.east) --
+    node[above, font=\tiny]{HyperBus} (hyper.west);
+
+% ---- Reloj 108 MHz: rPLL -> PSRAM (memory_clk), por el canal libre ----
+\draw[thick, yellow!60!black] (pll.west) -- ++(-1.1,0) coordinate (clktop)
+    node[midway, above, font=\tiny]{108\,MHz};
+\draw[thick, yellow!60!black] (clktop) -- (clktop |- psram.east);
+\draw[->, thick, yellow!60!black] (clktop |- psram.east) -- (psram.east)
+    node[midway, below, font=\tiny]{memory\_clk};
+
+\end{tikzpicture}
+\caption{Arquitectura expandida del SoC FemtoUN Boot. Se añaden el controlador SPI para lectura de MicroSD, el adaptador de bus PSRAM para acceso a HyperRAM de 8\,MB, y un PLL que genera los 108\,MHz requeridos por la PSRAM.}
+\label{fig:boot_arch}
+\end{figure}
+
+\subsection{Cambio Crítico: \texttt{ADDR\_WIDTH = 32}}
+
+El FemtoRV32 original utiliza \texttt{ADDR\_WIDTH = 24}, lo que limita el espacio de direcciones a 16\,MB (\texttt{0x000000}--\texttt{0xFFFFFF}). Para acceder a la PSRAM en \texttt{0x20000000} se requiere ampliar a 32 bits:
+
+\begin{lstlisting}[style=verilogstyle, caption={Instanciación del procesador con bus de 32 bits completo.}]
+FemtoRV32 #(
+    .RESET_ADDR (32'h00000000),
+    .ADDR_WIDTH (32)
+) CPU ( ... );
+\end{lstlisting}
+
+Esto incrementa ligeramente el uso de LUTs pero es necesario para el mapa de memoria expandido.
+
+
+\section{Mapa de Memoria Expandido}
+
+\begin{table}[H]
+\centering
+\caption{Mapa de memoria del SoC FemtoUN Boot.}
+\label{tab:boot_memmap}
+\begin{tabular}{l l l p{6.5cm}}
+\toprule
+\textbf{Dirección} & \textbf{Periférico} & \textbf{Tamaño} & \textbf{Descripción} \\
+\midrule
+\texttt{0x00000000} & BRAM       & 4\,KB  & Bootloader (código de arranque, solo lectura en runtime). \\
+\texttt{0x00400008} & UART\_DATA & 4\,B   & Registro de datos TX/RX. \\
+\texttt{0x00400010} & UART\_CTRL & 4\,B   & Control y estado del UART. \\
+\texttt{0x00500000} & SPI\_DATA  & 4\,B   & Byte a transmitir / último byte recibido [7:0]. \\
+\texttt{0x00500004} & SPI\_CTRL  & 4\,B   & Chip select y divisor de reloj. \\
+\texttt{0x00500008} & SPI\_STATUS& 4\,B   & Estado del controlador SPI (solo lectura). \\
+\texttt{0x20000000} & PSRAM      & 8\,MB  & Memoria externa HyperRAM (programa de usuario). \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+La decodificación de direcciones en \texttt{SOC\_boot.v} se amplía para cubrir los cuatro periféricos, comparando campos de bits de la dirección:
+
+\begin{lstlisting}[style=verilogstyle, caption={Decodificación de direcciones para cuatro periféricos.}]
+wire uart_cs  = (mem_addr[31:16] == 16'h0040);  // 0x0040xxxx
+wire spi_cs   = (mem_addr[31:16] == 16'h0050);  // 0x0050xxxx
+wire psram_cs = (mem_addr[31:29] == 3'b001);     // 0x20000000+
+wire bram_cs  = ~uart_cs & ~spi_cs & ~psram_cs;  // resto -> BRAM
+\end{lstlisting}
+
+
+\section{Periférico SPI}
+\label{sec:spi}
+
+\subsection{Descripción}
+
+El subsistema SPI se compone de dos módulos: \texttt{spi\_master.v}, que implementa el motor SPI en modo~0 (CPOL=0, CPHA=0) con reloj configurable, y \texttt{perip\_spi.v}, que actúa como interfaz entre el bus de memoria del SoC y el motor SPI, exponiendo tres registros mapeados en memoria.
+
+\subsection{Registros del Controlador SPI}
+
+\begin{table}[H]
+\centering
+\caption{Registros del periférico SPI.}
+\label{tab:spi_regs}
+\begin{tabular}{l l c p{7cm}}
+\toprule
+\textbf{Dirección} & \textbf{Nombre} & \textbf{Acceso} & \textbf{Descripción} \\
+\midrule
+\texttt{0x00500000} & SPI\_DATA & R/W &
+    \textbf{Escritura}: byte a transmitir [7:0]; inicia la transferencia automáticamente.
+    \textbf{Lectura}: último byte recibido [7:0] (dato capturado en MISO). \\
+\addlinespace
+\texttt{0x00500004} & SPI\_CTRL & R/W &
+    \textbf{Bit [0]}: \texttt{CS\_n} --- \texttt{0} = chip select activo (seleccionar SD), \texttt{1} = inactivo.
+    \textbf{Bits [15:8]}: \texttt{clk\_div} --- divisor de reloj SPI. \\
+\addlinespace
+\texttt{0x00500008} & SPI\_STATUS & R &
+    \textbf{Bit [0]}: \texttt{busy} --- \texttt{1} = transferencia SPI en progreso. \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+El reloj SPI se deriva del reloj del sistema mediante el divisor configurable:
+
+\begin{equation}
+f_{SCK} = \frac{f_{clk}}{2 \times (\texttt{clk\_div} + 1)}
+\end{equation}
+
+Para la inicialización de la tarjeta SD se requiere $f_{SCK} \leq 400$\,kHz, lo que se logra con \texttt{clk\_div = 33}: $f_{SCK} = 27\,000\,000 / (2 \times 34) \approx 397$\,kHz. Una vez inicializada, la velocidad se incrementa a 6.75\,MHz con \texttt{clk\_div = 1}.
+
+\subsection{Motor SPI (\texttt{spi\_master.v})}
+
+El motor implementa el protocolo SPI en modo~0: el dato se captura en el flanco positivo de SCK y se actualiza en el flanco negativo. Cada transferencia procesa 8 bits (un byte) simultáneamente en ambas direcciones (full-duplex), desplazando bit a bit desde MSB. La señal \texttt{busy} se activa al escribir en SPI\_DATA y se desactiva tras completar los 8 ciclos de reloj SPI.
+
+
+\section{Adaptador de Bus PSRAM (\texttt{psram\_bus.v})}
+\label{sec:psram}
+
+\subsection{Función}
+
+El módulo \texttt{psram\_bus.v} traduce las transacciones del bus de memoria del FemtoRV32 (señales \texttt{mem\_addr}, \texttt{mem\_wdata}, \texttt{mem\_wmask}, \texttt{mem\_rstrb}) al protocolo del IP \texttt{PSRAM\_Memory\_Interface\_HS} de Gowin, que controla los chips HyperRAM físicos. Este módulo es necesario porque el IP de Gowin utiliza un protocolo de handshake con señales \texttt{cmd}, \texttt{cmd\_en}, \texttt{rd\_data\_valid} que no coinciden directamente con el bus del FemtoRV32.
+
+\subsection{Protocolo de Acceso}
+
+Las escrituras a PSRAM se ejecutan en un ciclo: el adaptador genera un pulso \texttt{cmd\_en} con \texttt{cmd = 1} (escritura). Las lecturas requieren esperar la señal \texttt{rd\_data\_valid} del IP, durante lo cual el adaptador mantiene \texttt{mem\_rbusy = 1} para detener la CPU. Este mecanismo aprovecha la capacidad nativa del FemtoRV32 de entrar en el estado \texttt{WAIT\_ALU\_OR\_MEM} cuando \texttt{mem\_rbusy} o \texttt{mem\_wbusy} están activos.
+
+\subsection{Señales del IP PSRAM de Gowin}
+
+\begin{table}[H]
+\centering
+\caption{Puertos principales del IP \texttt{PSRAM\_Memory\_Interface\_HS}.}
+\label{tab:psram_ports}
+\begin{tabular}{l c l p{5.5cm}}
+\toprule
+\textbf{Puerto} & \textbf{Dir.} & \textbf{Ancho} & \textbf{Descripción} \\
+\midrule
+\texttt{clk}            & In  & 1 bit   & Reloj del sistema (27\,MHz). \\
+\texttt{memory\_clk}    & In  & 1 bit   & Reloj de memoria (108\,MHz, de la PLL). \\
+\texttt{pll\_lock}      & In  & 1 bit   & Señal de PLL estabilizada. \\
+\texttt{rst\_n}         & In  & 1 bit   & Reset activo bajo. \\
+\texttt{cmd}            & In  & 1 bit   & 0 = lectura, 1 = escritura. \\
+\texttt{cmd\_en}        & In  & 1 bit   & Pulso para ejecutar el comando. \\
+\texttt{addr}           & In  & 23 bits & Dirección byte ($2^{23}$ = 8\,MB). \\
+\texttt{wr\_data}       & In  & 32 bits & Datos a escribir. \\
+\texttt{data\_mask}     & In  & 4 bits  & Máscara de bytes (0 = escribir). \\
+\texttt{rd\_data}       & Out & 32 bits & Datos leídos. \\
+\texttt{rd\_data\_valid} & Out & 1 bit  & Dato de lectura válido. \\
+\texttt{init\_calib}    & Out & 1 bit   & Calibración completa (1 = listo). \\
+\midrule
+\texttt{O\_psram\_ck}    & Out & 2 bits & Reloj hacia chips HyperRAM. \\
+\texttt{IO\_psram\_dq}   & I/O & 16 bits & Bus de datos bidireccional. \\
+\texttt{IO\_psram\_rwds} & I/O & 2 bits  & Señal de strobe. \\
+\texttt{O\_psram\_cs\_n} & Out & 2 bits  & Chip select de los dos chips. \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{PLL: Generación de 108\,MHz}
+
+La PSRAM requiere un reloj de memoria de al menos $4\times$ el reloj del sistema. El IP \texttt{rPLL} de Gowin multiplica los 27\,MHz de entrada:
+
+\begin{equation}
+f_{mem} = 27\,\text{MHz} \times \frac{\text{FBDIV\_SEL} + 1}{\text{IDIV\_SEL} + 1} = 27 \times \frac{4}{1} = 108\,\text{MHz}
+\end{equation}
+
+La señal \texttt{pll\_lock} indica que la PLL se ha estabilizado y el sistema puede comenzar a operar.
+
+
+\section{Firmware del Bootloader}
+\label{sec:bootloader_fw}
+
+\subsection{Flujo de Arranque}
+
+El bootloader reside en la BRAM (4\,KB) y se ejecuta al encender la FPGA. Su función es inicializar la tarjeta MicroSD mediante el protocolo SPI, leer un programa de usuario almacenado en los primeros sectores de la tarjeta, copiarlo a la PSRAM y transferir la ejecución a la dirección \texttt{0x20000000}.
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[node distance=0.7cm, >=Stealth, font=\small]
+
+    \node[startstop] (start) {Power On};
+    \node[flowblock, below=of start] (bram) {CPU arranca en \texttt{0x0}\\(BRAM - bootloader)};
+    \node[flowblock, below=of bram] (banner) {Imprimir banner UART};
+    \node[flowblock, below=of banner] (spi) {Inicializar SPI\\(\texttt{clk\_div=33}, 397\,kHz)};
+    \node[flowblock, below=of spi] (cmd0) {Enviar CMD0, CMD8,\\CMD55/ACMD41};
+
+    \node[decision, below=0.8cm of cmd0] (ok) {¿SD\\OK?};
+
+    \node[flowblock, right=2.0cm of ok, fill=red!15] (fail) {LED parpadea\\HALT};
+
+    \node[flowblock, below=0.8cm of ok] (speed) {Subir velocidad SPI\\(\texttt{clk\_div=1}, 6.75\,MHz)};
+    \node[flowblock, below=of speed] (read) {Leer 32 bloques (16\,KB)\\con CMD17};
+    \node[flowblock, below=of read] (copy) {Escribir cada bloque\\en PSRAM (\texttt{0x20000000+})};
+    \node[flowblock, below=of copy] (verify) {Verificar primeras palabras};
+   
+    \draw[arrow] (start) -- (bram);
+    \draw[arrow] (bram) -- (banner);
+    \draw[arrow] (banner) -- (spi);
+    \draw[arrow] (spi) -- (cmd0);
+    \draw[arrow] (cmd0) -- (ok);
+    \draw[arrow] (ok) -- node[above]{Error} (fail);
+    \draw[arrow] (ok) -- node[left]{OK} (speed);
+    \draw[arrow] (speed) -- (read);
+    \draw[arrow] (read) -- (copy);
+    \draw[arrow] (copy) -- (verify);
+   
+
+\end{tikzpicture}
+\caption{Flujo de arranque del bootloader FemtoUN Boot.}
+\label{fig:boot_flow}
+\end{figure}
+
+\subsection{Inicialización de la Tarjeta SD}
+
+La inicialización de una tarjeta SD mediante SPI sigue una secuencia estandarizada. Primero se envían al menos 74 pulsos de reloj con CS inactivo para despertar la tarjeta. Luego se ejecutan tres comandos:
+
+\begin{table}[H]
+\centering
+\caption{Secuencia de comandos para inicialización de la tarjeta SD.}
+\begin{tabular}{l l l p{5.5cm}}
+\toprule
+\textbf{Comando} & \textbf{Bytes} & \textbf{Respuesta} & \textbf{Función} \\
+\midrule
+CMD0  & \texttt{40 00 00 00 00 95} & \texttt{0x01} & Reset; entrar en modo SPI (idle). \\
+CMD8  & \texttt{48 00 00 01 AA 87} & \texttt{0x01 + echo} & Verificar voltaje; identificar SD v2.0+. \\
+ACMD41 & CMD55 + CMD41 & \texttt{0x00} & Inicializar y salir del estado idle. Se repite en bucle hasta que la respuesta sea \texttt{0x00}. \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Lectura de Bloques y Copia a PSRAM}
+
+Una vez inicializada la SD, el bootloader lee 32 bloques de 512 bytes (16\,KB total) mediante el comando CMD17 (lectura de bloque individual). Cada bloque se lee byte a byte vía SPI, se ensambla en palabras de 32 bits en orden \textit{little-endian} y se escribe en la PSRAM a partir de la dirección \texttt{0x20000000}:
+
+\begin{lstlisting}[style=cstyle, caption={Pseudocódigo de lectura de un bloque y escritura a PSRAM.}]
+void sd_read_block(uint32_t sector, uint32_t *dest) {
+    sd_send_cmd(CMD17, sector);     // solicitar bloque
+    sd_wait_data_token();           // esperar token 0xFE
+    for (int i = 0; i < 128; i++) { // 512 bytes = 128 words
+        uint32_t word = 0;
+        word |= spi_transfer(0xFF);         // byte 0 (LSB)
+        word |= spi_transfer(0xFF) << 8;    // byte 1
+        word |= spi_transfer(0xFF) << 16;   // byte 2
+        word |= spi_transfer(0xFF) << 24;   // byte 3 (MSB)
+        dest[i] = word;                      // escribir a PSRAM
+    }
+    spi_transfer(0xFF); spi_transfer(0xFF); // descartar CRC
+}
+\end{lstlisting}
+
+\subsection{Salto a PSRAM}
+
+Tras copiar y verificar el programa de usuario, el bootloader ejecuta un salto incondicional a la dirección base de la PSRAM. Esto se implementa mediante un puntero a función en C:
+
+\begin{lstlisting}[style=cstyle, caption={Transferencia de control a la PSRAM.}]
+void (*entry)(void) = (void (*)(void))0x20000000;
+entry();  // equivale a: jalr x0, x_reg, 0  (salto sin retorno)
+\end{lstlisting}
+
+El programa de usuario debe contener su propio código de arranque (\texttt{user\_start.S}) que configure el puntero de pila dentro del espacio de la PSRAM antes de llamar a \texttt{main}.
+
+\subsection{Archivo de Arranque del Bootloader (\texttt{boot.S})}
+
+\begin{lstlisting}[style=asmstyle, caption={Código de arranque del bootloader.}]
+.section .text
+.global _start
+_start:
+    li sp, 0x00001000   # stack al final de la BRAM (4 KB)
+    j main
+.loop:
+    j .loop
+\end{lstlisting}
+
+\subsection{Linker Script (\texttt{boot\_link.ld})}
+
+\begin{lstlisting}[style=asmstyle, caption={Linker script del bootloader (ubicado en BRAM).}]
+ENTRY(_start)
+MEMORY {
+    BRAM (rwx) : ORIGIN = 0x00000000, LENGTH = 4K
+}
+SECTIONS {
+    .text : { *(.text*) } > BRAM
+    .rodata : { *(.rodata*) } > BRAM
+    .data : { *(.data*) } > BRAM
+    .bss : { *(.bss*) } > BRAM
+}
+\end{lstlisting}
+
+
+\section{Generación de IP Cores en Gowin EDA}
+\label{sec:ip_cores}
+
+La implementación en hardware requiere dos IP cores propietarios de Gowin que no pueden ser sintetizados a partir de código Verilog genérico: la PLL para generación de reloj y el controlador PSRAM HyperRAM.
+
+\subsection{IP rPLL (27\,MHz $\rightarrow$ 108\,MHz)}
+
+\begin{enumerate}[leftmargin=2cm]
+    \item En Gowin EDA: \textbf{Tools $\rightarrow$ IP Core Generator}.
+    \item Expandir \textbf{Hard Module $\rightarrow$ CLOCK $\rightarrow$ rPLL}.
+    \item Configurar: \texttt{CLKIN = 27\,MHz}, \texttt{CLKOUT = 108\,MHz}, marcar \texttt{LOCK output}.
+    \item Gowin calcula automáticamente los parámetros: \texttt{IDIV\_SEL = 0}, \texttt{FBDIV\_SEL = 3}.
+    \item El módulo generado (\texttt{Gowin\_rPLL}) expone tres puertos: \texttt{clkin} (entrada 27\,MHz), \texttt{clkout} (salida 108\,MHz), \texttt{lock} (PLL estabilizada).
+\end{enumerate}
+
+\subsection{IP PSRAM\_Memory\_Interface\_HS}
+
+\begin{enumerate}[leftmargin=2cm]
+    \item En Gowin EDA: \textbf{Tools $\rightarrow$ IP Core Generator}.
+    \item Expandir \textbf{Hard Module $\rightarrow$ MEMORY $\rightarrow$ PSRAM\_Memory\_Interface\_HS}.
+    \item Configurar:
+    \begin{itemize}
+        \item Device: \texttt{x2} (ambos chips HyperRAM del Tang Primer 20K).
+        \item Data Width: \texttt{32 bits} (ancho del bus del FemtoRV32).
+        \item Address Width: \texttt{23 bits} ($2^{23} = 8$\,MB).
+        \item System Clock: \texttt{27\,MHz}; Memory Clock: \texttt{108\,MHz}.
+        \item Marcar \texttt{Enable data mask} (necesario para escrituras por bytes).
+    \end{itemize}
+    \item El IP genera múltiples archivos \texttt{.v} que se agregan automáticamente al proyecto.
+    \item Los pines físicos de HyperRAM (\texttt{O\_psram\_ck}, \texttt{IO\_psram\_dq}, etc.) están conectados al die de forma fija y \textbf{no requieren constraints manuales} en el archivo CST.
+\end{enumerate}
+
+\subsection{Integración en \texttt{top\_tang\_boot.v}}
+
+Tras generar ambos IPs, se descomentean las instanciaciones en el archivo top-level y se eliminan las asignaciones temporales:
+
+\begin{lstlisting}[style=verilogstyle, caption={Instanciación de PLL y PSRAM IP en el top-level.}]
+// PLL: 27 MHz -> 108 MHz
+Gowin_rPLL pll_inst (
+    .clkin  (clk_27mhz ),
+    .clkout (memory_clk),
+    .lock   (pll_lock  )
+);
+
+// PSRAM HyperRAM
+PSRAM_Memory_Interface_HS_Top psram_ip (
+    .clk            (clk_27mhz         ),
+    .memory_clk     (memory_clk        ),
+    .pll_lock       (pll_lock          ),
+    .rst_n          (sys_resetn        ),
+    .O_psram_ck     (O_psram_ck        ),
+    .O_psram_ck_n   (O_psram_ck_n      ),
+    .IO_psram_rwds  (IO_psram_rwds     ),
+    .IO_psram_dq    (IO_psram_dq       ),
+    .O_psram_reset_n(O_psram_reset_n   ),
+    .O_psram_cs_n   (O_psram_cs_n      ),
+    .cmd            (psram_cmd         ),
+    .cmd_en         (psram_cmd_en      ),
+    .addr           (psram_addr        ),
+    .wr_data        (psram_wr_data     ),
+    .data_mask      (psram_data_mask   ),
+    .rd_data        (psram_rd_data     ),
+    .rd_data_valid  (psram_rd_data_valid),
+    .init_calib     (psram_init_calib  )
+);
+\end{lstlisting}
+
+
+\section{Simulación del Bootloader}
+
+La simulación utiliza modelos comportamentales de la tarjeta SD (\texttt{sd\_model.v}) y la PSRAM (\texttt{psram\_model.v}) que reproducen el protocolo de comunicación sin requerir los IP propietarios de Gowin. Las señales clave a verificar en GTKWave son:
+
+\begin{table}[H]
+\centering
+\caption{Señales clave a verificar en la simulación del bootloader.}
+\begin{tabular}{l p{8cm}}
+\toprule
+\textbf{Señal(es)} & \textbf{Verificación} \\
+\midrule
+\texttt{sd\_sck}, \texttt{sd\_mosi}, \texttt{sd\_cs\_n} & Secuencia SPI: CS bajo $\rightarrow$ 48 bits de comando $\rightarrow$ respuesta. \\
+\texttt{psram\_cmd\_en}, \texttt{psram\_addr} & Escrituras secuenciales a PSRAM con direcciones incrementales. \\
+\texttt{mem\_addr} & Transición de \texttt{0x0000xxxx} a \texttt{0x2000xxxx} tras el salto. \\
+Mensajes UART (stdout) & Banner del bootloader, confirmaciones de CMD0/CMD8/ACMD41, salto. \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{lstlisting}[style=bashstyle, caption={Compilación y simulación del bootloader.}]
+cd fw/ && make all          # compilar bootloader + programa de usuario
+cd ../sim/ && make sim      # ejecutar simulacion
+make wave                   # abrir GTKWave
+\end{lstlisting}
+
+
+\section{Compilación del Firmware}
+
+\begin{lstlisting}[style=consolestyle, caption={Compilación del bootloader y programa de usuario.}]
+# Bootloader (se almacena en BRAM via $readmemh)
+riscv64-unknown-elf-gcc -march=rv32i -mabi=ilp32 -Os ^
+    -nostartfiles -nostdlib -lgcc -T boot_link.ld ^
+    -o bootloader.elf boot.S bootloader.c
+riscv64-unknown-elf-objcopy -O verilog --verilog-data-width=4 ^
+    bootloader.elf bootloader.hex
+
+# Programa de usuario (se graba en MicroSD, se copia a PSRAM)
+riscv64-unknown-elf-gcc -march=rv32i -mabi=ilp32 -Os ^
+    -nostartfiles -nostdlib -lgcc -T user_link.ld ^
+    -o user_test.elf user_start.S user_test.c
+riscv64-unknown-elf-objcopy -O binary user_test.elf user_test.bin
+
+# Grabar en MicroSD (sector 0)
+sudo dd if=user_test.bin of=/dev/sdX bs=512 seek=0 conv=notrunc
+\end{lstlisting}
+
+
+\section{Estrategia de Desarrollo Incremental}
+
+La integración del bootloader se recomienda en tres fases para facilitar la depuración:
+
+\begin{table}[H]
+\centering
+\caption{Fases de desarrollo incremental del bootloader.}
+\begin{tabular}{c l p{7cm}}
+\toprule
+\textbf{Fase} & \textbf{Componente} & \textbf{Verificación} \\
+\midrule
+1 & SPI solo (sin PSRAM) & Firmware de prueba que envía CMD0 y lee respuesta. Verificar con osciloscopio o analizador lógico. \\
+2 & PSRAM solo (sin SD) & Firmware que escribe/lee palabras en \texttt{0x20000000}. Verificar integridad de datos por UART. \\
+3 & Bootloader completo & Integrar ambos periféricos. Verificar en simulación con modelos, luego en hardware con SD real. \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+
+\section{Estructura del Proyecto}
+
+\begin{lstlisting}[style=hexstyle, caption={Estructura de archivos del proyecto FemtoUN Boot.}]
+femtoun_boot/
+  rtl/
+    SOC_boot.v            SoC integrador (4 perifericos)
+    top_tang_boot.v       Top-level (PLL + PSRAM IP)
+    spi_master.v          Motor SPI modo 0
+    perip_spi.v           Periferico SPI mapeado en memoria
+    psram_bus.v           Adaptador bus FemtoRV32 <-> PSRAM IP
+    femtorv_quark.v       CPU FemtoRV32 (ADDR_WIDTH=32)
+    bram_hex.v            BRAM 4 KB con inicializacion hex
+    perip_uart.v          Periferico UART (sin cambios)
+    uart.v                Core UART (sin cambios)
+  fw/
+    boot.S                Startup del bootloader
+    bootloader.c          Codigo C del bootloader
+    boot_link.ld          Linker script (BRAM)
+    user_start.S          Startup del programa de usuario
+    user_test.c           Programa de prueba para PSRAM
+    user_link.ld          Linker script (PSRAM)
+    Makefile
+  sim/
+    tb_soc_boot.v         Testbench principal
+    sd_model.v            Modelo comportamental de tarjeta SD
+    psram_model.v         Modelo comportamental de PSRAM
+  constraints/
+    tang_boot.cst         Constraints de pines
+    tang_boot.sdc         Constraints de timing
+\end{lstlisting}
+
+
+% #####################################################################
+% CONCLUSIONES 
+% #####################################################################
+
+\section{Conclusiones Generales}
+\label{sec:conclusiones}
+
+\begin{enumerate}[leftmargin=2cm, label=\arabic*.]
+    \item \textbf{Viabilidad demostrada.} Se implementó un SoC RISC-V completo sobre FPGA de bajo costo, confirmando que las arquitecturas abiertas son plataformas viables para enseñanza e investigación.
+    \item \textbf{Verificación progresiva eficaz.} La metodología en tres etapas (simulación $\rightarrow$ eco $\rightarrow$ aplicación) permitió aislar problemas en cada nivel antes de avanzar.
+    \item \textbf{Canal UART íntegro.} La correspondencia exacta entre caracteres y códigos ASCII confirma el correcto funcionamiento bidireccional del subsistema serial.
+    \item \textbf{Gestión de \texttt{rx\_avail} obligatoria.} La espera activa tras \texttt{rx\_ack} es requisito no negociable; omitirla produce doble procesamiento silencioso.
+    \item \textbf{Direcciones como constantes de compilación.} Las macros \texttt{\#define} eliminan la dependencia de \texttt{.data}, inexistente con \texttt{-nostartfiles}.
+    \item \textbf{Inicialización de SP previa a \texttt{main}.} El archivo \texttt{start.S} resuelve estructuralmente la dependencia del prólogo del compilador.
+    \item \textbf{Limitaciones del ISA base.} Sin extensión M, la aritmética decimal requiere desplazamientos y restas sucesivas, incrementando tamaño de código y tiempo de ejecución.
+    \item \textbf{Linker script necesario.} El problema abierto señala la necesidad de controlar explícitamente la ubicación de \texttt{\_inicio} en \texttt{0x00000000}.
+    \item \textbf{Nueve hallazgos documentados} (E1--E4 del eco, S1--S4 de la sumadora, más la corrección de simulación) constituyen una guía práctica para firmware bare-metal sobre FemtoRV32.
+\end{enumerate}
+
+% =====================================================================
+% APÉNDICE: RESUMEN CONSOLIDADO DE HALLAZGOS
+% =====================================================================
+\appendix
+\section{Resumen Consolidado de Hallazgos}
+
+\begin{table}[H]
+\centering
+\caption{Los 9 hallazgos documentados durante el desarrollo de Femto\_Un.}
+\small
+\begin{tabular}{c l l p{3.2cm} p{3.5cm}}
+\toprule
+\textbf{ID} & \textbf{Etapa} & \textbf{Componente} & \textbf{Problema} & \textbf{Corrección} \\
+\midrule
+E1 & Eco & PuTTY & UTF-8 multibyte & ISO-8859-1 \\
+E2 & Eco & main.c & Punteros en .data & \texttt{\#define} \\
+E3 & Eco & main.c & Doble lectura & Espera rx\_avail=0 \\
+E4 & Eco & bram\_hex.v & BRAM 256 palabras & Ampliar a 8192 \\
+\midrule
+S1 & Suma & leer\_char & Retardo con -Os & Espera activa \\
+S2 & Suma & leer\_char & Diagnóstico & 3 variantes: OK \\
+S3 & Suma & main.c & SP tardío & start.S \\
+S4 & Suma & linkeo & Error $-7$/dígito & \textbf{Abierto} \\
+\midrule
+-- & Sim. & femtorv.v & Registros con X & Init. en BENCH \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+
+\section{Comandos de Compilación}
+
+\begin{lstlisting}[style=consolestyle, caption={Eco ASCII.}]
+riscv-none-elf-gcc -march=rv32i -mabi=ilp32 -Os -nostartfiles ^
+    "-Wl,-Ttext=0x00000000" -o firmware.elf main.c
+riscv-none-elf-objcopy -O verilog --verilog-data-width=4 firmware.elf firmware.hex
+\end{lstlisting}
+
+\begin{lstlisting}[style=consolestyle, caption={Sumadora con start.S.}]
+riscv-none-elf-gcc -march=rv32i -mabi=ilp32 -Os -nostartfiles -nostdlib ^
+    -lgcc "-Wl,-Ttext=0x00000000" "-Wl,-e_inicio" ^
+    -o firmware.elf start.S main.c
+riscv-none-elf-objcopy -O verilog --verilog-data-width=4 firmware.elf firmware.hex
+\end{lstlisting}
+
+\begin{lstlisting}[style=consolestyle, caption={Simulación.}]
+iverilog -DBENCH -o sim.out tb/tb_femtoUN.v src/*.v
+vvp sim.out
+gtkwave femtoUN.vcd femtoUN.gtkw
+\end{lstlisting}
+
+
+% =====================================================================
+% BIBLIOGRAFÍA
+% =====================================================================
+\begin{thebibliography}{99}
+\bibitem{riscv_spec} A. Waterman and K. Asanović, Eds., \textit{The RISC-V Instruction Set Manual, Volume I: Unprivileged ISA}, V20191213, RISC-V Foundation, 2019.
+\bibitem{femtorv32} B. Levy, ``FemtoRV32: A minimalistic RISC-V CPU,'' GitHub, 2021. \url{https://github.com/BrunoLevy/learn-fpga}
+\bibitem{gowin_gw2a} Gowin Semiconductor, \textit{GW2A Series of FPGA Products --- Data Sheet}, V1.9, 2024.
+\bibitem{tang_primer} Sipeed, \textit{Tang Primer 20K User Guide}, 2023. \url{https://wiki.sipeed.com/hardware/en/tang/tang-primer-20k/primer-20k.html}
+\bibitem{uart_protocol} J. Axelson, \textit{Serial Port Complete}, 2nd ed., Lakeview Research LLC, 2007.
+\bibitem{patterson_hennessy} D.A. Patterson and J.L. Hennessy, \textit{Computer Organization and Design RISC-V Edition}, 2nd ed., Morgan Kaufmann, 2020.
+\bibitem{harris_harris} S. Harris and D. Harris, \textit{Digital Design and Computer Architecture: RISC-V Edition}, Morgan Kaufmann, 2021.
+\bibitem{icarus} S. Williams, ``Icarus Verilog,'' \url{http://iverilog.icarus.com/}
+\bibitem{gtkwave} T. Bybell, ``GTKWave Electronic Waveform Viewer,'' \url{http://gtkwave.sourceforge.net/}
+\bibitem{gcc_riscv} xPack Project, ``xPack GNU RISC-V Embedded GCC,'' \url{https://xpack.github.io/dev-tools/riscv-none-elf-gcc/}
+\end{thebibliography}
+
+
+
+
+\end{document}
